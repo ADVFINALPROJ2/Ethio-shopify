@@ -1,0 +1,15 @@
+one:
+  name: MyString
+  description: MyText
+  price: 9.99
+  user: one
+  quantity: 1
+  status: active
+
+two:
+  name: MyString
+  description: MyText
+  price: 9.99
+  user: two
+  quantity: 1
+  status: active

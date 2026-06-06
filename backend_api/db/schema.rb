@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_06_04_164303) do
+ActiveRecord::Schema[8.1].define(version: 2026_06_04_164304) do
   create_schema "extensions"
 
   # These are extensions that must be enabled in order to support this database
@@ -20,6 +20,18 @@ ActiveRecord::Schema[8.1].define(version: 2026_06_04_164303) do
   enable_extension "pg_catalog.plpgsql"
   enable_extension "vault.supabase_vault"
 
+  create_table "public.products", force: :cascade do |t|
+    t.text "description"
+    t.string "name", null: false
+    t.decimal "price", precision: 10, scale: 2, null: false
+    t.integer "quantity", default: 0
+    t.string "status", default: "active"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.bigint "user_id", null: false
+    t.index ["user_id"], name: "index_products_on_user_id"
+  end
+
   create_table "public.users", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.string "fullname"
@@ -28,4 +40,5 @@ ActiveRecord::Schema[8.1].define(version: 2026_06_04_164303) do
     t.string "username"
   end
 
+  add_foreign_key "public.products", "public.users", column: "user_id"
 end
