@@ -1,11 +1,9 @@
-# Read about fixtures at https://api.rubyonrails.org/classes/ActiveRecord/FixtureSet.html
-
 one:
-  username: MyString
-  fullname: MyString
-  phone_number: MyString
+  username: abekesht
+  fullname: Abebe Bekele
+  phone_number: "+251911000001"
 
 two:
-  username: MyString
-  fullname: MyString
-  phone_number: MyString
+  username: alemtsehay
+  fullname: Alemtsehay Worku
+  phone_number: "+251911000002"

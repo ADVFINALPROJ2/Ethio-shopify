@@ -1,15 +1,15 @@
 one:
-  name: MyString
-  description: MyText
-  price: 9.99
+  name: Handwoven Scarf
+  description: Traditional Ethiopian handwoven scarf made from high-quality cotton
+  price: 29.99
   user: one
-  quantity: 1
+  quantity: 10
   status: active
 
 two:
-  name: MyString
-  description: MyText
-  price: 9.99
+  name: Coffee Set
+  description: Traditional Ethiopian coffee ceremony set with jebena and cups
+  price: 89.99
   user: two
-  quantity: 1
+  quantity: 5
   status: active
