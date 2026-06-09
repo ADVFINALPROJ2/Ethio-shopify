@@ -2,8 +2,14 @@ one:
   username: abekesht
   fullname: Abebe Bekele
   phone_number: "+251911000001"
+  telegram_id: "12345678"
+  first_name: Abebe
+  last_name: Bekele
 
 two:
   username: alemtsehay
   fullname: Alemtsehay Worku
   phone_number: "+251911000002"
+  telegram_id: "87654321"
+  first_name: Alemtsehay
+  last_name: Worku

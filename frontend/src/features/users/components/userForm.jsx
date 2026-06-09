@@ -4,14 +4,15 @@ export const UserForm = ({ onUserCreated }) => {
   const [username, setUsername] = useState('');
   const [fullname, setFullname] = useState('');
   const [phoneNumber, setPhoneNumber] = useState('');
+  const [telegramId, setTelegramId] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
 
     // Simple verification check before making the API call
-    if (!username || !fullname || !phoneNumber) {
-      return alert('Please fill in all fields (Username, Full Name, and Phone Number)');
+    if (!username || !fullname || !phoneNumber || !telegramId) {
+      return alert('Please fill in all fields (Username, Full Name, Phone Number, and Telegram ID)');
     }
 
     setIsSubmitting(true);
@@ -20,13 +21,15 @@ export const UserForm = ({ onUserCreated }) => {
       await onUserCreated({
         username: username,
         fullname: fullname,
-        phone_number: phoneNumber
+        phone_number: phoneNumber,
+        telegram_id: telegramId
       });
 
       // Reset form fields after successful backend creation
       setUsername('');
       setFullname('');
       setPhoneNumber('');
+      setTelegramId('');
     } catch (error) {
       console.error('Failed to create user:', error);
       alert('Error creating user.');
@@ -72,6 +75,18 @@ export const UserForm = ({ onUserCreated }) => {
           disabled={isSubmitting}
           style={{ width: '100%', padding: '6px', boxSizing: 'border-box' }}
           placeholder="e.g. +251..."
+        />
+      </div>
+
+      <div style={{ marginBottom: '15px' }}>
+        <label style={{ display: 'block', marginBottom: '4px', fontWeight: 'bold' }}>Telegram ID:</label>
+        <input
+          type="text"
+          value={telegramId}
+          onChange={(e) => setTelegramId(e.target.value)}
+          disabled={isSubmitting}
+          style={{ width: '100%', padding: '6px', boxSizing: 'border-box' }}
+          placeholder="e.g. 123456789"
         />
       </div>
 
