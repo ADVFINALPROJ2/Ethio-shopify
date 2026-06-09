@@ -1,10 +1,10 @@
 import { useState } from 'react';
 
 export const ProductForm = ({ users, onProductCreated }) => {
-  const [name, setName] = useState('');
+  const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [price, setPrice] = useState('');
-  const [quantity, setQuantity] = useState('');
+  const [stock, setStock] = useState('');
   const [userId, setUserId] = useState('');
   const [images, setImages] = useState([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -12,17 +12,17 @@ export const ProductForm = ({ users, onProductCreated }) => {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    if (!name || !price || !userId) {
-      return alert('Please fill in Product Name, Price, and select a seller');
+    if (!title || !price || !userId) {
+      return alert('Please fill in Title, Price, and select a seller');
     }
 
     setIsSubmitting(true);
     try {
       const formData = new FormData();
-      formData.append('product[name]', name);
+      formData.append('product[name]', title);
       formData.append('product[description]', description || '');
       formData.append('product[price]', parseFloat(price));
-      formData.append('product[quantity]', quantity ? parseInt(quantity, 10) : 0);
+      formData.append('product[quantity]', stock ? parseInt(stock, 10) : 0);
       formData.append('product[user_id]', parseInt(userId, 10));
 
       for (let i = 0; i < images.length; i++) {
@@ -31,10 +31,10 @@ export const ProductForm = ({ users, onProductCreated }) => {
 
       await onProductCreated(formData);
 
-      setName('');
+      setTitle('');
       setDescription('');
       setPrice('');
-      setQuantity('');
+      setStock('');
       setUserId('');
       setImages([]);
     } catch (error) {
@@ -50,11 +50,11 @@ export const ProductForm = ({ users, onProductCreated }) => {
       <h3 style={{ marginTop: 0 }}>Add New Product</h3>
 
       <div style={{ marginBottom: '12px' }}>
-        <label style={{ display: 'block', marginBottom: '4px', fontWeight: 'bold' }}>Product Name:</label>
+        <label style={{ display: 'block', marginBottom: '4px', fontWeight: 'bold' }}>Title:</label>
         <input
           type="text"
-          value={name}
-          onChange={(e) => setName(e.target.value)}
+          value={title}
+          onChange={(e) => setTitle(e.target.value)}
           disabled={isSubmitting}
           style={{ width: '100%', padding: '6px', boxSizing: 'border-box' }}
           placeholder="e.g. Handwoven Scarf"
@@ -87,12 +87,12 @@ export const ProductForm = ({ users, onProductCreated }) => {
       </div>
 
       <div style={{ marginBottom: '12px' }}>
-        <label style={{ display: 'block', marginBottom: '4px', fontWeight: 'bold' }}>Quantity:</label>
+        <label style={{ display: 'block', marginBottom: '4px', fontWeight: 'bold' }}>Stock:</label>
         <input
           type="number"
           min="0"
-          value={quantity}
-          onChange={(e) => setQuantity(e.target.value)}
+          value={stock}
+          onChange={(e) => setStock(e.target.value)}
           disabled={isSubmitting}
           style={{ width: '100%', padding: '6px', boxSizing: 'border-box' }}
           placeholder="e.g. 10"
@@ -100,7 +100,7 @@ export const ProductForm = ({ users, onProductCreated }) => {
       </div>
 
       <div style={{ marginBottom: '12px' }}>
-        <label style={{ display: 'block', marginBottom: '4px', fontWeight: 'bold' }}>Product Images:</label>
+        <label style={{ display: 'block', marginBottom: '4px', fontWeight: 'bold' }}>Image:</label>
         <input
           type="file"
           multiple
