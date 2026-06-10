@@ -1,4 +1,4 @@
-export const ProductList = ({ products, isLoading, onDelete, onPurchase }) => {
+export const ProductList = ({ products, isLoading, onDelete, onPurchase, onEdit, onArchive }) => {
   if (isLoading) return <p>Loading products from backend...</p>;
   if (products.length === 0) return <p>No products found.</p>;
 
@@ -37,6 +37,34 @@ export const ProductList = ({ products, isLoading, onDelete, onPurchase }) => {
                   }}
                 >
                   {product.quantity < 1 ? 'Out of Stock' : 'Buy Now'}
+                </button>
+                <button
+                  onClick={() => onEdit(product)}
+                  style={{
+                    padding: '4px 10px',
+                    backgroundColor: '#ffc107',
+                    color: '#000',
+                    border: 'none',
+                    borderRadius: '4px',
+                    cursor: 'pointer',
+                    fontSize: '0.85em'
+                  }}
+                >
+                  Edit
+                </button>
+                <button
+                  onClick={() => onArchive(product)}
+                  style={{
+                    padding: '4px 10px',
+                    backgroundColor: product.status === 'archived' ? '#28a745' : '#6f42c1',
+                    color: 'white',
+                    border: 'none',
+                    borderRadius: '4px',
+                    cursor: 'pointer',
+                    fontSize: '0.85em'
+                  }}
+                >
+                  {product.status === 'archived' ? 'Activate' : 'Archive'}
                 </button>
                 <button
                   onClick={() => onDelete(product.id)}

@@ -1,6 +1,6 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
-export const ProductForm = ({ users, onProductCreated }) => {
+export const ProductForm = ({ users, onProductCreated, editingProduct, onCancelEdit }) => {
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [price, setPrice] = useState('');
@@ -9,11 +9,35 @@ export const ProductForm = ({ users, onProductCreated }) => {
   const [images, setImages] = useState([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  useEffect(() => {
+    if (editingProduct) {
+      setTitle(editingProduct.name || '');
+      setDescription(editingProduct.description || '');
+      setPrice(editingProduct.price || '');
+      setStock(editingProduct.quantity || '');
+      setUserId(editingProduct.user_id || '');
+      setImages([]);
+    }
+  }, [editingProduct]);
+
+  const resetForm = () => {
+    setTitle('');
+    setDescription('');
+    setPrice('');
+    setStock('');
+    setUserId('');
+    setImages([]);
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    if (!title || !price || !userId) {
-      return alert('Please fill in Title, Price, and select a seller');
+    if (!title || !price) {
+      return alert('Please fill in Title and Price');
+    }
+
+    if (!editingProduct && !userId) {
+      return alert('Please select a seller');
     }
 
     setIsSubmitting(true);
@@ -23,23 +47,21 @@ export const ProductForm = ({ users, onProductCreated }) => {
       formData.append('product[description]', description || '');
       formData.append('product[price]', parseFloat(price));
       formData.append('product[quantity]', stock ? parseInt(stock, 10) : 0);
-      formData.append('product[user_id]', parseInt(userId, 10));
+
+      if (!editingProduct) {
+        formData.append('product[user_id]', parseInt(userId, 10));
+      }
 
       for (let i = 0; i < images.length; i++) {
         formData.append('product[images][]', images[i]);
       }
 
-      await onProductCreated(formData);
+      await onProductCreated(formData, editingProduct);
 
-      setTitle('');
-      setDescription('');
-      setPrice('');
-      setStock('');
-      setUserId('');
-      setImages([]);
+      resetForm();
     } catch (error) {
-      console.error('Failed to create product:', error);
-      alert('Error creating product.');
+      console.error('Failed to save product:', error);
+      alert('Error saving product.');
     } finally {
       setIsSubmitting(false);
     }
@@ -47,7 +69,7 @@ export const ProductForm = ({ users, onProductCreated }) => {
 
   return (
     <form onSubmit={handleSubmit} style={{ marginBottom: '20px', padding: '15px', border: '1px solid #ccc', borderRadius: '5px' }}>
-      <h3 style={{ marginTop: 0 }}>Add New Product</h3>
+      <h3 style={{ marginTop: 0 }}>{editingProduct ? 'Edit Product' : 'Add New Product'}</h3>
 
       <div style={{ marginBottom: '12px' }}>
         <label style={{ display: 'block', marginBottom: '4px', fontWeight: 'bold' }}>Title:</label>
@@ -116,37 +138,58 @@ export const ProductForm = ({ users, onProductCreated }) => {
         )}
       </div>
 
-      <div style={{ marginBottom: '15px' }}>
-        <label style={{ display: 'block', marginBottom: '4px', fontWeight: 'bold' }}>Seller:</label>
-        <select
-          value={userId}
-          onChange={(e) => setUserId(e.target.value)}
-          disabled={isSubmitting}
-          style={{ width: '100%', padding: '6px', boxSizing: 'border-box' }}
-        >
-          <option value="">Select a seller</option>
-          {users.map((user) => (
-            <option key={user.id} value={user.id}>
-              {user.fullname} (@{user.username})
-            </option>
-          ))}
-        </select>
-      </div>
+      {!editingProduct && (
+        <div style={{ marginBottom: '15px' }}>
+          <label style={{ display: 'block', marginBottom: '4px', fontWeight: 'bold' }}>Seller:</label>
+          <select
+            value={userId}
+            onChange={(e) => setUserId(e.target.value)}
+            disabled={isSubmitting}
+            style={{ width: '100%', padding: '6px', boxSizing: 'border-box' }}
+          >
+            <option value="">Select a seller</option>
+            {users.map((user) => (
+              <option key={user.id} value={user.id}>
+                {user.fullname} (@{user.username})
+              </option>
+            ))}
+          </select>
+        </div>
+      )}
 
-      <button
-        type="submit"
-        disabled={isSubmitting}
-        style={{
-          padding: '8px 16px',
-          backgroundColor: '#28a745',
-          color: 'white',
-          border: 'none',
-          borderRadius: '4px',
-          cursor: isSubmitting ? 'not-allowed' : 'pointer'
-        }}
-      >
-        {isSubmitting ? 'Adding...' : 'Add Product'}
-      </button>
+      <div style={{ display: 'flex', gap: '8px' }}>
+        <button
+          type="submit"
+          disabled={isSubmitting}
+          style={{
+            padding: '8px 16px',
+            backgroundColor: editingProduct ? '#ffc107' : '#28a745',
+            color: editingProduct ? '#000' : 'white',
+            border: 'none',
+            borderRadius: '4px',
+            cursor: isSubmitting ? 'not-allowed' : 'pointer'
+          }}
+        >
+          {isSubmitting ? 'Saving...' : editingProduct ? 'Update Product' : 'Add Product'}
+        </button>
+        {editingProduct && (
+          <button
+            type="button"
+            onClick={onCancelEdit}
+            disabled={isSubmitting}
+            style={{
+              padding: '8px 16px',
+              backgroundColor: '#6c757d',
+              color: 'white',
+              border: 'none',
+              borderRadius: '4px',
+              cursor: 'pointer'
+            }}
+          >
+            Cancel
+          </button>
+        )}
+      </div>
     </form>
   );
 };

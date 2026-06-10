@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { getUsers } from '../../users/api/getUsers';
 import { getProducts } from '../api/getProducts';
 import { createProduct } from '../api/createProduct';
+import { updateProduct } from '../api/updateProduct';
 import { deleteProduct } from '../api/deleteProduct';
 import { purchaseProduct } from '../api/purchaseProduct';
 import { ProductForm } from '../components/productForm';
@@ -11,6 +12,7 @@ export const ProductsPage = () => {
     const [products, setProducts] = useState([]);
     const [users, setUsers] = useState([]);
     const [isLoading, setIsLoading] = useState(true);
+    const [editingProduct, setEditingProduct] = useState(null);
 
     useEffect(() => {
         const fetchInitialData = async () => {
@@ -31,9 +33,25 @@ export const ProductsPage = () => {
         fetchInitialData();
     }, []);
 
-    const handleProductCreated = async (newProductData) => {
-        const createdProduct = await createProduct(newProductData);
-        setProducts((prev) => [...prev, createdProduct]);
+    const handleProductCreated = async (formData, productToEdit) => {
+        if (productToEdit) {
+            const updatedProduct = await updateProduct(productToEdit.id, formData);
+            setProducts((prev) =>
+                prev.map((p) => (p.id === productToEdit.id ? updatedProduct : p))
+            );
+            setEditingProduct(null);
+        } else {
+            const createdProduct = await createProduct(formData);
+            setProducts((prev) => [...prev, createdProduct]);
+        }
+    };
+
+    const handleEdit = (product) => {
+        setEditingProduct(product);
+    };
+
+    const handleCancelEdit = () => {
+        setEditingProduct(null);
     };
 
     const handleDelete = async (id) => {
@@ -41,6 +59,9 @@ export const ProductsPage = () => {
         try {
             await deleteProduct(id);
             setProducts((prev) => prev.filter((p) => p.id !== id));
+            if (editingProduct && editingProduct.id === id) {
+                setEditingProduct(null);
+            }
         } catch (error) {
             console.error('Failed to delete product:', error);
             alert('Error deleting product.');
@@ -60,16 +81,37 @@ export const ProductsPage = () => {
         }
     };
 
+    const handleArchive = async (product) => {
+        const newStatus = product.status === 'archived' ? 'active' : 'archived';
+        if (!window.confirm(`Are you sure you want to ${newStatus === 'archived' ? 'archive' : 'activate'} this product?`)) return;
+        try {
+            const updatedProduct = await updateProduct(product.id, { status: newStatus });
+            setProducts((prev) =>
+                prev.map((p) => (p.id === product.id ? updatedProduct : p))
+            );
+        } catch (error) {
+            console.error('Failed to update product status:', error);
+            alert('Error updating product status.');
+        }
+    };
+
     return (
         <div style={{ maxWidth: '600px', margin: '40px auto', fontFamily: 'sans-serif' }}>
             <h2>Ethio-Shopify Products</h2>
-            <ProductForm users={users} onProductCreated={handleProductCreated} />
+            <ProductForm
+                users={users}
+                onProductCreated={handleProductCreated}
+                editingProduct={editingProduct}
+                onCancelEdit={handleCancelEdit}
+            />
             <hr />
             <ProductList
                 products={products}
                 isLoading={isLoading}
                 onDelete={handleDelete}
                 onPurchase={handlePurchase}
+                onEdit={handleEdit}
+                onArchive={handleArchive}
             />
         </div>
     );
