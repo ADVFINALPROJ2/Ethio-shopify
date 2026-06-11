@@ -29,6 +29,10 @@ export const AuthProvider = ({ children }) => {
     const webApp = getTelegramWebApp();
     const initData = webApp?.initData;
 
+    console.log("window.Telegram", window.Telegram);
+    console.log("window.Telegram?.WebApp", window.Telegram?.WebApp);
+    console.log("initData", window.Telegram?.WebApp?.initData);
+
     if (!initData) {
       throw new Error('Open Ethio-Shopify from Telegram to sign in.');
     }
