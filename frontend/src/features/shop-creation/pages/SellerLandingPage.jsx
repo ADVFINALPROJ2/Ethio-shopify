@@ -63,11 +63,14 @@ const BulbIcon = (props) => (
   </svg>
 );
 
-const ClipboardIcon = (props) => (
+const ChecklistIcon = (props) => (
   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}>
-    <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"></path>
-    <rect x="8" y="2" width="8" height="4" rx="1" ry="1"></rect>
-    <path d="M9 14l2 2 4-4"></path>
+    <line x1="8" y1="6" x2="21" y2="6"></line>
+    <line x1="8" y1="12" x2="21" y2="12"></line>
+    <line x1="8" y1="18" x2="21" y2="18"></line>
+    <polyline points="3 6 4 7 6 5"></polyline>
+    <polyline points="3 12 4 13 6 11"></polyline>
+    <polyline points="3 18 4 19 6 17"></polyline>
   </svg>
 );
 
@@ -148,14 +151,6 @@ export const SellerLandingPage = () => {
             </p>
           </div>
         </div>
-
-        {/* SHOP PICTURE PLACEHOLDER */}
-        <div style={styles.heroRight}>
-          <div style={styles.shopImagePlaceholder}>
-            <StoreIcon style={styles.placeholderIconSvg} />
-            <span style={styles.labelText}>[ Shop Picture Placeholder ]</span>
-          </div>
-        </div>
       </section>
 
       {/* WHY SELL SECTION */}
@@ -187,10 +182,8 @@ export const SellerLandingPage = () => {
 
       {/* SUCCESS BANNER */}
       <section style={styles.successBanner}>
-        {/* BAG PICTURE PLACEHOLDER */}
-        <div style={styles.bagImagePlaceholder}>
-          <BagIcon style={styles.bagIconSvg} />
-          <p style={{ fontSize: '10px', margin: 0, color: '#00a84e' }}>[ Bag Pic ]</p>
+        <div style={styles.shopIconContainer}>
+          <StoreIcon style={styles.shopIconSvg} />
         </div>
         <div style={styles.successContent}>
           <h4 style={styles.successTitle}>Everything you need to succeed</h4>
@@ -217,10 +210,8 @@ export const SellerLandingPage = () => {
             </div>
           </div>
           
-          {/* CHECKLIST PICTURE PLACEHOLDER */}
           <div style={styles.checklistPlaceholder}>
-            <ClipboardIcon style={styles.checklistIconSvg} />
-            <span style={{ fontSize: '9px', color: '#66767e' }}>[ Checklist ]</span>
+            <ChecklistIcon style={styles.checklistIconSvg} />
           </div>
         </div>
 
@@ -363,31 +354,7 @@ const styles = {
     fontWeight: '500',
     lineHeight: '1.4',
   },
-  heroRight: {},
-  shopImagePlaceholder: {
-    height: '160px',
-    backgroundColor: '#fff1e6',
-    borderRadius: '16px',
-    border: '2px dashed #ffd8b3',
-    display: 'flex',
-    flexDirection: 'column',
-    alignItems: 'center',
-    justifyContent: 'center',
-    position: 'relative',
-    overflow: 'hidden',
-  },
-  placeholderAwnings: {},
-  placeholderIconSvg: {
-    width: '48px',
-    height: '48px',
-    color: '#b36b24',
-    marginBottom: '6px',
-  },
-  labelText: {
-    fontSize: '12px',
-    color: '#b36b24',
-    fontWeight: '500',
-  },
+
   featuresSection: {
     marginBottom: '28px',
   },
@@ -413,7 +380,7 @@ const styles = {
     position: 'relative',
     marginBottom: '28px',
   },
-  bagImagePlaceholder: {
+  shopIconContainer: {
     width: '54px',
     height: '54px',
     backgroundColor: '#ffffff',
@@ -425,7 +392,7 @@ const styles = {
     justifyContent: 'center',
     flexShrink: 0,
   },
-  bagIconSvg: {
+  shopIconSvg: {
     width: '24px',
     height: '24px',
     color: '#00a84e',
