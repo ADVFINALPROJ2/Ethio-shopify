@@ -1,16 +1,18 @@
 import { useState } from 'react';
 import { UsersPage } from './features/users/pages/UsersPage';
 import { ProductsPage } from './features/products/pages/ProductsPage';
+import { SellerLandingPage } from './features/shop-creation/pages/SellerLandingPage';
 import { useAuth } from './features/auth/context/useAuth';
 import './App.css';
 
 const NAV_ITEMS = [
   { key: 'users', label: 'Users' },
-  { key: 'products', label: 'Products' }
+  { key: 'products', label: 'Products' },
+  { key: 'shop', label: 'Create Shop' }
 ];
 
 function App() {
-  const [activeTab, setActiveTab] = useState('users');
+  const [activeTab, setActiveTab] = useState('shop');
   const { user, isAuthenticated, isLoading, error } = useAuth();
 
   if (isLoading) {
@@ -64,6 +66,7 @@ function App() {
       <main className="app-content">
         {activeTab === 'users' && <UsersPage />}
         {activeTab === 'products' && <ProductsPage />}
+        {activeTab === 'shop' && <SellerLandingPage />}
       </main>
     </div>
   );

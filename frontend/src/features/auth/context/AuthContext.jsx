@@ -56,6 +56,24 @@ export const AuthProvider = ({ children }) => {
     const initializeAuth = async () => {
       setIsLoading(true);
       setError(null);
+      
+      const isLocalhost =
+        window.location.hostname === "localhost" ||
+        window.location.hostname === "127.0.0.1";
+
+      if (isLocalhost) {
+        setUser({
+          id: 1,
+          username: "devuser",
+          fullname: "Development User",
+          first_name: "Dev",
+          last_name: "User"
+        });
+
+        setToken('thisIsaRandomtokenJustTofoolThefrontendwedontActuallyNeedrealTokenScinceAlazarisonlyworkingintheUIfornow');
+        setIsLoading(false);
+        return;
+      }
 
       try {
         const storedToken = getStoredAuthToken();
