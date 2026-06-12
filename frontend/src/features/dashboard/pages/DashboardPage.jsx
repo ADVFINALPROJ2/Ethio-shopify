@@ -5,6 +5,7 @@ import { AddProductPage } from '../../products/pages/AddProductPage';
 import { ProductDetailsPage } from '../../products/pages/ProductDetailsPage';
 import { OrdersPage } from '../../orders/pages/OrdersPage';
 import { OrderDetailsPage } from '../../orders/pages/OrderDetailsPage';
+import { EditProfilePage } from '../../profile/pages/EditProfilePage';
 
 // SVG Icons Inline
 const BagIcon = () => <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4zM3 6h18M16 10a4 4 0 0 1-8 0" /></svg>;
@@ -40,9 +41,36 @@ export const DashboardPage = () => {
     );
   }
 
-  if (activeTab === 'orders') {
+  if (activeTab !== 'dashboard') {
+    const page = activeTab === 'orders'
+      ? <OrdersPage onSelectOrder={() => setView('order-details')} />
+      : <EditProfilePage onCancel={() => setActiveTab('dashboard')} onSave={() => setActiveTab('dashboard')} />;
+
     return (
-      <OrdersPage onSelectOrder={() => setView('order-details')} />
+      <div style={{ minHeight: '100vh' }}>
+        {page}
+        {/* Functional bottom nav overlay — always rendered so tab switching works */}
+        <nav style={styles.bottomNav}>
+          <button onClick={() => setActiveTab('dashboard')} style={{ ...styles.navItem, color: activeTab === 'dashboard' ? '#00a84e' : '#66767e' }}>
+            <svg width="20" height="20" viewBox="0 0 24 24" fill={activeTab === 'dashboard' ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth="2">
+              <rect x="3" y="3" width="7" height="7" /><rect x="14" y="3" width="7" height="7" /><rect x="14" y="14" width="7" height="7" /><rect x="3" y="14" width="7" height="7" />
+            </svg>
+            Dashboard
+          </button>
+          <button onClick={() => setActiveTab('orders')} style={{ ...styles.navItem, color: activeTab === 'orders' ? '#00a84e' : '#66767e' }}>
+            <svg width="20" height="20" viewBox="0 0 24 24" fill={activeTab === 'orders' ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth="2">
+              <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z" />
+            </svg>
+            Orders
+          </button>
+          <button onClick={() => setActiveTab('profile')} style={{ ...styles.navItem, color: activeTab === 'profile' ? '#00a84e' : '#66767e' }}>
+            <svg width="20" height="20" viewBox="0 0 24 24" fill={activeTab === 'profile' ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth="2">
+              <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" /><circle cx="12" cy="7" r="4" />
+            </svg>
+            Profile
+          </button>
+        </nav>
+      </div>
     );
   }
 
