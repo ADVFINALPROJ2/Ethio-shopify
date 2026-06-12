@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { StatCard } from '../components/StatCard';
 import { ProductRow } from '../components/ProductRow';
+import { AddProductPage } from '../../products/pages/AddProductPage';
 
 // SVG Icons Inline
 const BagIcon = () => <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4zM3 6h18M16 10a4 4 0 0 1-8 0" /></svg>;
@@ -9,7 +10,17 @@ const EarningsIcon = () => <svg width="16" height="16" viewBox="0 0 24 24" fill=
 const EyeIcon = () => <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" /><circle cx="12" cy="12" r="3" /></svg>;
 
 export const DashboardPage = () => {
+  const [view, setView] = useState('dashboard');
   const [activeTab, setActiveTab] = useState('dashboard');
+
+  if (view === 'add-product') {
+    return (
+      <AddProductPage
+        onCancel={() => setView('dashboard')}
+        onSaveSuccess={() => setView('dashboard')}
+      />
+    );
+  }
 
   const productsData = [
     { id: 1, name: 'Elegant Green Dress', price: 'ETB 1,850', stock: 12 },
@@ -100,7 +111,7 @@ export const DashboardPage = () => {
             <p style={styles.addSubtitle}>Expand your shop by adding new products.</p>
           </div>
         </div>
-        <button style={styles.actionAddBtn}>Add Product</button>
+        <button style={styles.actionAddBtn} onClick={() => setView('add-product')}>Add Product</button>
       </section>
 
       {/* BOTTOM NAVIGATION FIXED POSITION WRAPPER */}
