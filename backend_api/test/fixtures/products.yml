@@ -5,6 +5,7 @@ one:
   user: one
   quantity: 10
   status: active
+  low_stock_threshold: 5
 
 two:
   name: Coffee Set
@@ -13,3 +14,4 @@ two:
   user: two
   quantity: 5
   status: active
+  low_stock_threshold: 5

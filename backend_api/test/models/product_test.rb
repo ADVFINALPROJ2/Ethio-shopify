@@ -40,4 +40,23 @@ class ProductTest < ActiveSupport::TestCase
     @product.status = "invalid"
     assert_not @product.valid?
   end
+
+  test "should have default low_stock_threshold" do
+    product = Product.new(name: "Test", price: 10, quantity: 5, user: @product.user)
+    assert_equal 5, product.low_stock_threshold
+  end
+
+  test "low_stock_alert_job should be enqueued when stock below threshold" do
+    product = products(:two)
+    assert_enqueued_with(job: LowStockAlertJob, args: [ product.id ]) do
+      product.update!(quantity: 2)
+    end
+  end
+
+  test "low_stock_alert_job should not be enqueued when stock above threshold" do
+    product = products(:one)
+    assert_no_enqueued_jobs(only: LowStockAlertJob) do
+      product.update!(quantity: 8)
+    end
+  end
 end

@@ -35,6 +35,8 @@ gem "image_processing", "~> 1.2"
 # Use Rack CORS for handling Cross-Origin Resource Sharing (CORS), making cross-origin Ajax possible
 gem "rack-cors"
 
+# Telegram bot for notifications
+gem "telegram-bot-ruby"
 # JSON Web Tokens for API authentication
 gem "jwt"
 
