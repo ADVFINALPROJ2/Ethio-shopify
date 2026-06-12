@@ -46,7 +46,7 @@ const ChevronRightIcon = () => (
   </svg>
 );
 
-export const ShopSetupPage = ({ onBack }) => {
+export const ShopSetupPage = ({ onBack, onComplete }) => {
   const [formData, setFormData] = useState({
     shopName: '',
     category: '',
@@ -87,7 +87,9 @@ export const ShopSetupPage = ({ onBack }) => {
       window.Telegram.WebApp.HapticFeedback.impactOccurred('medium');
     }
     console.log("Submitting Shop Data: ", formData);
-    // Proceed to next steps (e.g., payment / layout setup configuration)
+    if (onComplete) {
+      onComplete(formData);
+    }
   };
 
   return (

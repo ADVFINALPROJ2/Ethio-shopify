@@ -3,6 +3,7 @@ import { UsersPage } from './features/users/pages/UsersPage';
 import { ProductsPage } from './features/products/pages/ProductsPage';
 import { SellerLandingPage } from './features/shop-creation/pages/SellerLandingPage';
 import { ShopSetupPage } from './features/shop-creation/pages/ShopSetupPage';
+import { DashboardPage } from './features/dashboard/pages/DashboardPage';
 import { useAuth } from './features/auth/context/useAuth';
 import './App.css';
 
@@ -72,7 +73,10 @@ function App() {
           <SellerLandingPage onCreateShopTrigger={() => setShopStep('setup')} />
         )}
         {activeTab === 'shop' && shopStep === 'setup' && (
-          <ShopSetupPage onBack={() => setShopStep('landing')} />
+          <ShopSetupPage onBack={() => setShopStep('landing')} onComplete={() => setShopStep('dashboard')} />
+        )}
+        {activeTab === 'shop' && shopStep === 'dashboard' && (
+          <DashboardPage />
         )}
       </main>
     </div>
