@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { UsersPage } from './features/users/pages/UsersPage';
 import { ProductsPage } from './features/products/pages/ProductsPage';
 import { SellerLandingPage } from './features/shop-creation/pages/SellerLandingPage';
+import { ShopSetupPage } from './features/shop-creation/pages/ShopSetupPage';
 import { useAuth } from './features/auth/context/useAuth';
 import './App.css';
 
@@ -13,6 +14,7 @@ const NAV_ITEMS = [
 
 function App() {
   const [activeTab, setActiveTab] = useState('shop');
+  const [shopStep, setShopStep] = useState('landing');
   const { user, isAuthenticated, isLoading, error } = useAuth();
 
   if (isLoading) {
@@ -66,7 +68,12 @@ function App() {
       <main className="app-content">
         {activeTab === 'users' && <UsersPage />}
         {activeTab === 'products' && <ProductsPage />}
-        {activeTab === 'shop' && <SellerLandingPage />}
+        {activeTab === 'shop' && shopStep === 'landing' && (
+          <SellerLandingPage onCreateShopTrigger={() => setShopStep('setup')} />
+        )}
+        {activeTab === 'shop' && shopStep === 'setup' && (
+          <ShopSetupPage onBack={() => setShopStep('landing')} />
+        )}
       </main>
     </div>
   );

@@ -101,15 +101,15 @@ const ArrowRightIcon = (props) => (
   </svg>
 );
 
-export const SellerLandingPage = () => {
+export const SellerLandingPage = ({ onCreateShopTrigger }) => {
   
   const handleCreateShop = () => {
     // Check if Telegram WebApp API is available
     if (window.Telegram?.WebApp) {
       window.Telegram.WebApp.HapticFeedback.impactOccurred('medium');
-      // Perform route transition or API call here
-    } else {
-      console.log("Create shop clicked");
+    }
+    if (onCreateShopTrigger) {
+      onCreateShopTrigger();
     }
   };
 
