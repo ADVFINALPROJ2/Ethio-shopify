@@ -3,6 +3,8 @@ import { StatCard } from '../components/StatCard';
 import { ProductRow } from '../components/ProductRow';
 import { AddProductPage } from '../../products/pages/AddProductPage';
 import { ProductDetailsPage } from '../../products/pages/ProductDetailsPage';
+import { OrdersPage } from '../../orders/pages/OrdersPage';
+import { OrderDetailsPage } from '../../orders/pages/OrderDetailsPage';
 
 // SVG Icons Inline
 const BagIcon = () => <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4zM3 6h18M16 10a4 4 0 0 1-8 0" /></svg>;
@@ -29,6 +31,18 @@ export const DashboardPage = () => {
       <ProductDetailsPage
         onBack={() => setView('dashboard')}
       />
+    );
+  }
+
+  if (view === 'order-details') {
+    return (
+      <OrderDetailsPage onBack={() => setView('dashboard')} />
+    );
+  }
+
+  if (activeTab === 'orders') {
+    return (
+      <OrdersPage onSelectOrder={() => setView('order-details')} />
     );
   }
 
