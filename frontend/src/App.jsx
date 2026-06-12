@@ -1,16 +1,21 @@
 import { useState } from 'react';
 import { UsersPage } from './features/users/pages/UsersPage';
 import { ProductsPage } from './features/products/pages/ProductsPage';
+import { SellerLandingPage } from './features/shop-creation/pages/SellerLandingPage';
+import { ShopSetupPage } from './features/shop-creation/pages/ShopSetupPage';
+import { DashboardPage } from './features/dashboard/pages/DashboardPage';
 import { useAuth } from './features/auth/context/useAuth';
 import './App.css';
 
 const NAV_ITEMS = [
   { key: 'users', label: 'Users' },
-  { key: 'products', label: 'Products' }
+  { key: 'products', label: 'Products' },
+  { key: 'shop', label: 'Create Shop' }
 ];
 
 function App() {
-  const [activeTab, setActiveTab] = useState('users');
+  const [activeTab, setActiveTab] = useState('shop');
+  const [shopStep, setShopStep] = useState('landing');
   const { user, isAuthenticated, isLoading, error } = useAuth();
 
   if (isLoading) {
@@ -64,6 +69,15 @@ function App() {
       <main className="app-content">
         {activeTab === 'users' && <UsersPage />}
         {activeTab === 'products' && <ProductsPage />}
+        {activeTab === 'shop' && shopStep === 'landing' && (
+          <SellerLandingPage onCreateShopTrigger={() => setShopStep('setup')} />
+        )}
+        {activeTab === 'shop' && shopStep === 'setup' && (
+          <ShopSetupPage onBack={() => setShopStep('landing')} onComplete={() => setShopStep('dashboard')} />
+        )}
+        {activeTab === 'shop' && shopStep === 'dashboard' && (
+          <DashboardPage />
+        )}
       </main>
     </div>
   );
