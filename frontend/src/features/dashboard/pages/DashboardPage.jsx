@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { StatCard } from '../components/StatCard';
 import { ProductRow } from '../components/ProductRow';
 import { AddProductPage } from '../../products/pages/AddProductPage';
+import { ProductDetailsPage } from '../../products/pages/ProductDetailsPage';
 
 // SVG Icons Inline
 const BagIcon = () => <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4zM3 6h18M16 10a4 4 0 0 1-8 0" /></svg>;
@@ -12,12 +13,21 @@ const EyeIcon = () => <svg width="16" height="16" viewBox="0 0 24 24" fill="none
 export const DashboardPage = () => {
   const [view, setView] = useState('dashboard');
   const [activeTab, setActiveTab] = useState('dashboard');
+  const [selectedProduct, setSelectedProduct] = useState(null);
 
   if (view === 'add-product') {
     return (
       <AddProductPage
         onCancel={() => setView('dashboard')}
         onSaveSuccess={() => setView('dashboard')}
+      />
+    );
+  }
+
+  if (view === 'product-details') {
+    return (
+      <ProductDetailsPage
+        onBack={() => setView('dashboard')}
       />
     );
   }
@@ -97,6 +107,10 @@ export const DashboardPage = () => {
               name={product.name}
               price={product.price}
               stockCount={product.stock}
+              onClick={() => {
+                setSelectedProduct(product);
+                setView('product-details');
+              }}
             />
           ))}
         </div>

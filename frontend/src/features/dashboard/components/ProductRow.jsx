@@ -10,12 +10,12 @@ const getNextPlaceholder = () => {
   return { bg: PLACEHOLDER_COLORS[idx], letter: PLACEHOLDER_LETTERS[idx] };
 };
 
-export const ProductRow = ({ name, price, stockCount }) => {
+export const ProductRow = ({ name, price, stockCount, onClick }) => {
   const isLowStock = stockCount <= 5;
   const placeholder = getNextPlaceholder();
   
   return (
-    <div style={styles.row}>
+    <div onClick={onClick} style={{ ...styles.row, cursor: onClick ? 'pointer' : 'default' }}>
       <div style={{ ...styles.imgPlaceholder, backgroundColor: placeholder.bg }}>
         <span style={styles.imgText}>{placeholder.letter}</span>
       </div>
