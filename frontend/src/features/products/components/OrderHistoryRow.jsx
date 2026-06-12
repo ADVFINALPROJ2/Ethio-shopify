@@ -1,6 +1,6 @@
 import React from 'react';
 
-export const OrderHistoryRow = ({ orderId, customerName, date, time, status, amount }) => {
+export const OrderHistoryRow = ({ orderId, customerName, date, time, status, amount, onClick }) => {
   const isPending = status.toLowerCase() === 'pending';
   const badgeStyles = {
     color: isPending ? '#d97706' : '#00a84e',
@@ -8,7 +8,7 @@ export const OrderHistoryRow = ({ orderId, customerName, date, time, status, amo
   };
 
   return (
-    <div style={styles.row}>
+    <div onClick={onClick} style={{ ...styles.row, cursor: onClick ? 'pointer' : 'default' }}>
       <div style={styles.iconContainer}>
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#66767e" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
           <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"></path>

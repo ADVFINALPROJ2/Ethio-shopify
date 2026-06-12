@@ -1,8 +1,16 @@
 import React, { useState } from 'react';
 import { OrderHistoryRow } from '../components/OrderHistoryRow';
+import { OrderDetailsPage } from '../../orders/pages/OrderDetailsPage';
 
 export const ProductDetailsPage = ({ onBack }) => {
+  const [view, setView] = useState('details');
   const [searchQuery, setSearchQuery] = useState('');
+
+  if (view === 'order-details') {
+    return (
+      <OrderDetailsPage onBack={() => setView('details')} />
+    );
+  }
 
   const orderLogs = [
     { id: 1, orderId: '#ORD-10248', customer: 'Selam Tesfaye', date: 'May 20, 2024', time: '2:30 PM', status: 'Pending', amount: 'ETB 1,850' },
@@ -143,6 +151,7 @@ export const ProductDetailsPage = ({ onBack }) => {
                 time={order.time}
                 status={order.status}
                 amount={order.amount}
+                onClick={() => setView('order-details')}
               />
             ))
           ) : (
