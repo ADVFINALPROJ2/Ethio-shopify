@@ -396,6 +396,7 @@ const styles = {
     justifyContent: 'space-around',
     padding: '8px 0 20px 0',
     boxSizing: 'border-box',
+    zIndex: 20,
   },
   navItem: {
     background: 'none',
