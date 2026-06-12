@@ -29,15 +29,59 @@ export const DashboardPage = () => {
 
   if (view === 'product-details') {
     return (
-      <ProductDetailsPage
-        onBack={() => setView('dashboard')}
-      />
+      <div style={{ minHeight: '100vh' }}>
+        <ProductDetailsPage
+          onBack={() => setView('dashboard')}
+        />
+        <nav style={styles.bottomNav}>
+          <button onClick={() => { setView('dashboard'); setActiveTab('dashboard'); }} style={{ ...styles.navItem, color: '#00a84e' }}>
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" strokeWidth="2">
+              <rect x="3" y="3" width="7" height="7" /><rect x="14" y="3" width="7" height="7" /><rect x="14" y="14" width="7" height="7" /><rect x="3" y="14" width="7" height="7" />
+            </svg>
+            Dashboard
+          </button>
+          <button onClick={() => { setView('dashboard'); setActiveTab('orders'); }} style={{ ...styles.navItem, color: '#66767e' }}>
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z" />
+            </svg>
+            Orders
+          </button>
+          <button onClick={() => { setView('dashboard'); setActiveTab('profile'); }} style={{ ...styles.navItem, color: '#66767e' }}>
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" /><circle cx="12" cy="7" r="4" />
+            </svg>
+            Profile
+          </button>
+        </nav>
+      </div>
     );
   }
 
   if (view === 'order-details') {
     return (
-      <OrderDetailsPage onBack={() => setView('dashboard')} />
+      <div style={{ minHeight: '100vh' }}>
+        <OrderDetailsPage onBack={() => setView('dashboard')} />
+        <nav style={styles.bottomNav}>
+          <button onClick={() => { setView('dashboard'); setActiveTab('dashboard'); }} style={{ ...styles.navItem, color: '#00a84e' }}>
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" strokeWidth="2">
+              <rect x="3" y="3" width="7" height="7" /><rect x="14" y="3" width="7" height="7" /><rect x="14" y="14" width="7" height="7" /><rect x="3" y="14" width="7" height="7" />
+            </svg>
+            Dashboard
+          </button>
+          <button onClick={() => { setView('dashboard'); setActiveTab('orders'); }} style={{ ...styles.navItem, color: '#66767e' }}>
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z" />
+            </svg>
+            Orders
+          </button>
+          <button onClick={() => { setView('dashboard'); setActiveTab('profile'); }} style={{ ...styles.navItem, color: '#66767e' }}>
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" /><circle cx="12" cy="7" r="4" />
+            </svg>
+            Profile
+          </button>
+        </nav>
+      </div>
     );
   }
 
