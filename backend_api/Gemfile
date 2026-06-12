@@ -37,8 +37,11 @@ gem "rack-cors"
 
 # Telegram bot for notifications
 gem "telegram-bot-ruby"
+# JSON Web Tokens for API authentication
+gem "jwt"
 
 group :development, :test do
+  gem "sqlite3"
   # See https://guides.rubyonrails.org/debugging_rails_applications.html#debugging-with-the-debug-gem
   gem "debug", platforms: %i[ mri windows ], require: "debug/prelude"
 

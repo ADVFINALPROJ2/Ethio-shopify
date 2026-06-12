@@ -1,0 +1,9 @@
+class AddTelegramFieldsToUsers < ActiveRecord::Migration[8.1]
+  def change
+    add_column :users, :telegram_id, :string
+    add_column :users, :first_name, :string
+    add_column :users, :last_name, :string
+
+    add_index :users, :telegram_id, unique: true
+  end
+end
