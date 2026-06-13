@@ -12,7 +12,7 @@ class ProductsController < ApplicationController
   end
 
   def create
-    @product = Product.new(product_params)
+    @product = current_user.products.new(product_params)
 
     if @product.save
       attach_images if params[:product][:images].present?
@@ -52,7 +52,7 @@ class ProductsController < ApplicationController
 
     @product.decrement_stock!(quantity)
     render json: product_json(@product), status: :ok
-  rescue ActiveRecord::RecordInvalid => e
+  rescue ActiveRecord::RecordInvalid
     render json: { errors: @product.errors.full_messages }, status: :unprocessable_entity
   end
 
@@ -63,7 +63,7 @@ class ProductsController < ApplicationController
   end
 
   def product_params
-    params.require(:product).permit(:name, :description, :price, :quantity, :status, :user_id, :low_stock_threshold)
+    params.require(:product).permit(:name, :description, :price, :quantity, :status, :low_stock_threshold, :category_id)
   end
 
   def attach_images

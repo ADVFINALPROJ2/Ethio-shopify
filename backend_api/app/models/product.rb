@@ -1,6 +1,6 @@
 class Product < ApplicationRecord
   belongs_to :user
-  belongs_to :shop, optional: true
+  belongs_to :shop
   belongs_to :category, optional: true
 
   has_many :order_items
@@ -31,12 +31,11 @@ class Product < ApplicationRecord
 
   private
 
-  def check_low_stock
     def check_low_stock
       return unless low_stock_threshold.present?
       return unless quantity.present?
       return if quantity > low_stock_threshold
 
     LowStockAlertJob.perform_later(id)
-  end
+    end
 end

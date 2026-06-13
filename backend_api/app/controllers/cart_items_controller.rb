@@ -19,7 +19,7 @@ class CartItemsController < ApplicationController
       return
     end
 
-    cart_item = `@cart.cart_items.find_or_initialize_by`(product_id: params[:product_id])
+    cart_item = @cart.cart_items.find_or_initialize_by(product_id: params[:product_id])
     cart_item.quantity = (cart_item.quantity || 0) + params[:quantity].to_i
 
     if cart_item.save

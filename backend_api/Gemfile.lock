@@ -414,8 +414,8 @@ DEPENDENCIES
   solid_cable
   solid_cache
   solid_queue
-  telegram-bot-ruby
   sqlite3
+  telegram-bot-ruby
   thruster
   tzinfo-data
 
