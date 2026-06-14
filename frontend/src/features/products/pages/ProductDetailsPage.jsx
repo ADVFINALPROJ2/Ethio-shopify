@@ -1,29 +1,57 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { OrderHistoryRow } from '../components/OrderHistoryRow';
 import { OrderDetailsPage } from '../../orders/pages/OrderDetailsPage';
+import { getProduct } from '../api/getProduct';
+import { getProductOrders } from '../api/getProductOrders';
 
-export const ProductDetailsPage = ({ onBack }) => {
+export const ProductDetailsPage = ({ productId, onBack }) => {
   const [view, setView] = useState('details');
   const [searchQuery, setSearchQuery] = useState('');
+  const [product, setProduct] = useState(null);
+  const [orders, setOrders] = useState([]);
+  const [selectedOrderId, setSelectedOrderId] = useState(null);
+  const [isLoading, setIsLoading] = useState(false);
+  const [errorMessage, setErrorMessage] = useState('');
+
+  const formatCurrency = (value) => `ETB ${Number(value || 0).toLocaleString()}`;
+  const formatDate = (value) => value ? new Date(value).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' }) : '';
+  const formatTime = (value) => value ? new Date(value).toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' }) : '';
+
+  useEffect(() => {
+    if (!productId) return;
+
+    const loadProduct = async () => {
+      setIsLoading(true);
+      setErrorMessage('');
+
+      try {
+        const [productData, productOrders] = await Promise.all([
+          getProduct(productId),
+          getProductOrders(productId)
+        ]);
+        setProduct(productData);
+        setOrders(productOrders);
+      } catch (error) {
+        setErrorMessage(error.response?.data?.error || 'Unable to load product details.');
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    loadProduct();
+  }, [productId]);
 
   if (view === 'order-details') {
     return (
-      <OrderDetailsPage onBack={() => setView('details')} />
+      <OrderDetailsPage orderId={selectedOrderId} onBack={() => setView('details')} />
     );
   }
 
-  const orderLogs = [
-    { id: 1, orderId: '#ORD-10248', customer: 'Selam Tesfaye', date: 'May 20, 2024', time: '2:30 PM', status: 'Pending', amount: 'ETB 1,850' },
-    { id: 2, orderId: '#ORD-10235', customer: 'Liya Ahmed', date: 'May 19, 2024', time: '6:15 PM', status: 'Delivered', amount: 'ETB 1,850' },
-    { id: 3, orderId: '#ORD-10221', customer: 'Mekdes Abebe', date: 'May 18, 2024', time: '11:45 AM', status: 'Delivered', amount: 'ETB 1,850' },
-    { id: 4, orderId: '#ORD-10205', customer: 'Betelhem Desta', date: 'May 17, 2024', time: '9:20 PM', status: 'Pending', amount: 'ETB 1,850' },
-    { id: 5, orderId: '#ORD-10198', customer: 'Nahom Kidane', date: 'May 17, 2024', time: '3:10 PM', status: 'Delivered', amount: 'ETB 1,850' },
-  ];
-
-  const filteredOrders = orderLogs.filter(order => 
-    order.orderId.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    order.customer.toLowerCase().includes(searchQuery.toLowerCase())
+  const filteredOrders = orders.filter(order => 
+    order.order_number.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    (order.customer_name || '').toLowerCase().includes(searchQuery.toLowerCase())
   );
+  const mainImageUrl = product?.image_urls?.[0];
 
   return (
     <div style={styles.container}>
@@ -49,45 +77,54 @@ export const ProductDetailsPage = ({ onBack }) => {
       {/* CORE PRODUCT SNAPSHOT OVERVIEW */}
       <section style={styles.mainSnapshotCard}>
         <div style={styles.mainImagePlaceholder}>
-          <span style={{ fontSize: '40px' }}>👗</span>
-          <div style={styles.imageLabelTag}>[ Main Product Pic ]</div>
+          {mainImageUrl ? (
+            <img src={mainImageUrl} alt={product?.name} style={styles.productImage} />
+          ) : (
+            <>
+              <span style={{ fontSize: '40px' }}>🛍️</span>
+              <div style={styles.imageLabelTag}>No image</div>
+            </>
+          )}
           <button style={styles.editImageBtn}>✏️ Edit</button>
         </div>
 
         <div style={styles.snapshotInfo}>
           <div style={styles.titleRow}>
-            <h1 style={styles.productTitle}>Elegant Green Dress</h1>
+            <h1 style={styles.productTitle}>{product?.name || 'Product'}</h1>
             <button style={styles.dotsButton}>
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#66767e" strokeWidth="2.5">
                 <circle cx="12" cy="5" r="1" /><circle cx="12" cy="12" r="1" /><circle cx="12" cy="17" r="1" />
               </svg>
             </button>
           </div>
-          <span style={styles.activeBadge}>Active</span>
-          <span style={styles.categorySubtext}>🏷️ Fashion & Apparel • Dress</span>
+          <span style={styles.activeBadge}>{product?.status || 'active'}</span>
+          <span style={styles.categorySubtext}>🏷️ {product?.category_name || 'Uncategorized'}</span>
           <p style={styles.productDescription}>
-            A stylish and elegant green dress perfect for casual outings and special occasions.
+            {product?.description || 'No description provided.'}
           </p>
         </div>
       </section>
+
+      {errorMessage && <div style={styles.errorMessage}>{errorMessage}</div>}
+      {isLoading && <div style={styles.loadingMessage}>Loading product details...</div>}
 
       {/* QUAD ANALYTICS METRIC HUB */}
       <section style={styles.analyticsGrid}>
         <div style={styles.metricBox}>
           <span style={styles.metricLabel}>Price</span>
-          <span style={styles.metricValue}>ETB 1,850</span>
+          <span style={styles.metricValue}>{formatCurrency(product?.price)}</span>
         </div>
         <div style={styles.metricBox}>
           <span style={styles.metricLabel}>Stock Quantity</span>
-          <span style={{ ...styles.metricValue, color: '#00a84e' }}>25 <span style={styles.stockUnit}>in stock</span></span>
+          <span style={{ ...styles.metricValue, color: '#00a84e' }}>{product?.quantity || 0} <span style={styles.stockUnit}>in stock</span></span>
         </div>
         <div style={styles.metricBox}>
           <span style={styles.metricLabel}>Total Sold</span>
-          <span style={styles.metricValue}>48</span>
+          <span style={styles.metricValue}>{product?.total_sold || 0}</span>
         </div>
         <div style={styles.metricBox}>
           <span style={styles.metricLabel}>Total Revenue</span>
-          <span style={styles.metricValue}>ETB 88,880</span>
+          <span style={styles.metricValue}>{formatCurrency(product?.total_revenue)}</span>
         </div>
       </section>
 
@@ -95,18 +132,11 @@ export const ProductDetailsPage = ({ onBack }) => {
       <section style={styles.sectionBlock}>
         <h3 style={styles.sectionTitle}>Product Images</h3>
         <div style={styles.galleryRow}>
-          <div style={{ ...styles.thumbPlaceholder, border: '2px solid #00a84e' }}>
-            <span>👗</span>
-            <span style={styles.thumbLabel}>[ Pic 1 ]</span>
-          </div>
-          <div style={styles.thumbPlaceholder}>
-            <span>💃</span>
-            <span style={styles.thumbLabel}>[ Pic 2 ]</span>
-          </div>
-          <div style={styles.thumbPlaceholder}>
-            <span>🧵</span>
-            <span style={styles.thumbLabel}>[ Pic 3 ]</span>
-          </div>
+          {(product?.image_urls || []).map((imageUrl, index) => (
+            <div key={imageUrl} style={{ ...styles.thumbPlaceholder, border: index === 0 ? '2px solid #00a84e' : '1px dashed #ccd4d8' }}>
+              <img src={imageUrl} alt={`${product?.name} ${index + 1}`} style={styles.thumbImage} />
+            </div>
+          ))}
           <button style={styles.addImageSquare}>
             <span style={{ fontSize: '18px', color: '#66767e' }}>＋</span>
             <span style={styles.addImageText}>Add Image</span>
@@ -145,13 +175,16 @@ export const ProductDetailsPage = ({ onBack }) => {
             filteredOrders.map(order => (
               <OrderHistoryRow 
                 key={order.id}
-                orderId={order.orderId}
-                customerName={order.customer}
-                date={order.date}
-                time={order.time}
+                orderId={order.order_number}
+                customerName={order.customer_name || 'Customer'}
+                date={formatDate(order.created_at)}
+                time={formatTime(order.created_at)}
                 status={order.status}
-                amount={order.amount}
-                onClick={() => setView('order-details')}
+                amount={formatCurrency(order.total)}
+                onClick={() => {
+                  setSelectedOrderId(order.id);
+                  setView('order-details');
+                }}
               />
             ))
           ) : (
@@ -161,7 +194,7 @@ export const ProductDetailsPage = ({ onBack }) => {
 
         {/* PAGINATION LINK ROWFOOTER */}
         <div style={styles.tableFooter}>
-          <span style={styles.paginationText}>Showing 1 to {filteredOrders.length} of {orderLogs.length} orders</span>
+          <span style={styles.paginationText}>Showing 1 to {filteredOrders.length} of {orders.length} orders</span>
           <button style={styles.viewAllBtn}>View all orders ›</button>
         </div>
       </section>
@@ -259,6 +292,12 @@ const styles = {
     justifyContent: 'center',
     position: 'relative',
     flexShrink: 0,
+    overflow: 'hidden',
+  },
+  productImage: {
+    width: '100%',
+    height: '100%',
+    objectFit: 'cover',
   },
   imageLabelTag: {
     fontSize: '8px',
@@ -302,6 +341,24 @@ const styles = {
   },
   categorySubtext: { fontSize: '11px', color: '#66767e', fontWeight: '500' },
   productDescription: { margin: '6px 0 0 0', fontSize: '12px', color: '#4a555a', lineHeight: '1.4' },
+  errorMessage: {
+    backgroundColor: '#fef2f2',
+    border: '1px solid #fecaca',
+    color: '#b91c1c',
+    borderRadius: '8px',
+    padding: '10px 12px',
+    fontSize: '12px',
+    marginBottom: '12px',
+  },
+  loadingMessage: {
+    backgroundColor: '#eff6ff',
+    border: '1px solid #bfdbfe',
+    color: '#1d4ed8',
+    borderRadius: '8px',
+    padding: '10px 12px',
+    fontSize: '12px',
+    marginBottom: '12px',
+  },
   analyticsGrid: {
     display: 'grid',
     gridTemplateColumns: '1fr 1fr',
@@ -334,6 +391,12 @@ const styles = {
     alignItems: 'center',
     justifyContent: 'center',
     flexShrink: 0,
+    overflow: 'hidden',
+  },
+  thumbImage: {
+    width: '100%',
+    height: '100%',
+    objectFit: 'cover',
   },
   thumbLabel: { fontSize: '7px', color: '#a0aec0', marginTop: '2px' },
   addImageSquare: {

@@ -1,6 +1,6 @@
 class AuthController < ApplicationController
   skip_before_action :authenticate_user!, only: [:telegram], raise: false
-  before_action :authenticate_user!, only: [:me]
+  before_action :authenticate_user!, only: [:me, :update]
 
   # POST /auth/telegram
   def telegram
@@ -85,11 +85,36 @@ class AuthController < ApplicationController
   # GET /me
   def me
     render json: {
-      user: current_user.as_json(except: [:created_at, :updated_at])
+      user: user_json(current_user)
     }, status: :ok
   end
 
+  # PATCH /me
+  def update
+    if current_user.update(user_params.except(:avatar))
+      current_user.avatar.attach(user_params[:avatar]) if user_params[:avatar].present?
+      render json: { user: user_json(current_user) }, status: :ok
+    else
+      render json: { errors: current_user.errors.full_messages }, status: :unprocessable_entity
+    end
+  end
+
   private
+
+  def user_params
+    params.require(:user).permit(:fullname, :phone_number, :email, :avatar)
+  end
+
+  def user_json(user)
+    user.as_json(except: [:created_at, :updated_at])
+        .merge("avatar_url" => avatar_url(user))
+  end
+
+  def avatar_url(user)
+    return unless user.avatar.attached?
+
+    Rails.application.routes.url_helpers.rails_blob_url(user.avatar, only_path: true)
+  end
 
   def valid_telegram_signature?(params, bot_token)
     hash = params["hash"]

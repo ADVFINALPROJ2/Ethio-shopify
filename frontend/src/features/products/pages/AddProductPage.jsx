@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { ProductFormField } from '../components/ProductFormField';
+import { createProduct } from '../api/createProduct';
 
 export const AddProductPage = ({ onCancel, onSaveSuccess }) => {
   const [productData, setProductData] = useState({
@@ -12,6 +13,8 @@ export const AddProductPage = ({ onCancel, onSaveSuccess }) => {
 
   const [nameCount, setNameCount] = useState(0);
   const [descCount, setDescCount] = useState(0);
+  const [isSaving, setIsSaving] = useState(false);
+  const [errorMessage, setErrorMessage] = useState('');
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -40,13 +43,33 @@ export const AddProductPage = ({ onCancel, onSaveSuccess }) => {
     }
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    if (window.Telegram?.WebApp) {
-      window.Telegram.WebApp.HapticFeedback.notificationOccurred('success');
+
+    const formData = new FormData();
+    formData.append('product[name]', productData.name);
+    formData.append('product[description]', productData.description);
+    formData.append('product[price]', productData.price);
+    formData.append('product[quantity]', productData.stock);
+
+    if (productData.image) {
+      formData.append('product[images][]', productData.image);
     }
-    console.log("Saving Product Data Object to Backend API Structure...", productData);
-    if (onSaveSuccess) onSaveSuccess();
+
+    setIsSaving(true);
+    setErrorMessage('');
+
+    try {
+      await createProduct(formData);
+      if (window.Telegram?.WebApp) {
+        window.Telegram.WebApp.HapticFeedback.notificationOccurred('success');
+      }
+      if (onSaveSuccess) onSaveSuccess();
+    } catch (error) {
+      setErrorMessage(error.response?.data?.errors?.join(', ') || 'Unable to save product.');
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   return (
@@ -172,12 +195,13 @@ export const AddProductPage = ({ onCancel, onSaveSuccess }) => {
         </ProductFormField>
 
         {/* ACTION ACTION BUTTONS SPLIT BAR */}
+        {errorMessage && <div style={styles.errorMessage}>{errorMessage}</div>}
         <div style={styles.actionButtonGroup}>
-          <button type="button" onClick={onCancel} style={styles.cancelBtn}>
+          <button type="button" onClick={onCancel} style={styles.cancelBtn} disabled={isSaving}>
             Cancel
           </button>
-          <button type="submit" style={styles.saveBtn}>
-            Save Product
+          <button type="submit" style={{ ...styles.saveBtn, opacity: isSaving ? 0.7 : 1 }} disabled={isSaving}>
+            {isSaving ? 'Saving...' : 'Save Product'}
           </button>
         </div>
       </form>
@@ -364,6 +388,14 @@ const styles = {
     display: 'flex',
     gap: '12px',
     marginTop: '10px',
+  },
+  errorMessage: {
+    backgroundColor: '#fef2f2',
+    border: '1px solid #fecaca',
+    color: '#b91c1c',
+    borderRadius: '8px',
+    padding: '10px 12px',
+    fontSize: '12px',
   },
   cancelBtn: {
     flex: 1,

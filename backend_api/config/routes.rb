@@ -5,11 +5,20 @@ Rails.application.routes.draw do
   # root "posts#index"
   post "auth/telegram", to: "auth#telegram"
   get "me", to: "auth#me"
+  patch "me", to: "auth#update"
+
+  get "dashboard/stats", to: "dashboard#stats"
+  get "shops/me", to: "shops#show"
+  patch "shops/me", to: "shops#update"
+  resources :shops, only: [ :create ]
+
+  resources :orders, only: [ :index, :show ]
 
   resources :users
   resources :products do
     member do
       post :purchase
+      get :orders
     end
   end
 

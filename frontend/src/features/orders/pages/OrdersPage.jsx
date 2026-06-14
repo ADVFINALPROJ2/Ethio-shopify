@@ -1,23 +1,38 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { OrderListRow } from '../components/OrderListRow';
+import { getOrders } from '../api/getOrders';
 
 export const OrdersPage = ({ onSelectOrder }) => {
   const [searchQuery, setSearchQuery] = useState('');
+  const [orders, setOrders] = useState([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const [errorMessage, setErrorMessage] = useState('');
 
-  const dataset = [
-    { id: 1, orderId: '#ORD-10248', customer: 'Selam Tesfaye', date: 'May 20, 2024', time: '2:30 PM', status: 'Pending', amount: 'ETB 1,850' },
-    { id: 2, orderId: '#ORD-10235', customer: 'Liya Ahmed', date: 'May 19, 2024', time: '6:15 PM', status: 'Delivered', amount: 'ETB 1,850' },
-    { id: 3, orderId: '#ORD-10221', customer: 'Mekdes Abebe', date: 'May 18, 2024', time: '11:45 AM', status: 'Delivered', amount: 'ETB 1,850' },
-    { id: 4, orderId: '#ORD-10205', customer: 'Betelhem Desta', date: 'May 17, 2024', time: '9:20 PM', status: 'Pending', amount: 'ETB 1,850' },
-    { id: 5, orderId: '#ORD-10198', customer: 'Nahom Kidane', date: 'May 17, 2024', time: '3:10 PM', status: 'Delivered', amount: 'ETB 1,850' },
-    { id: 6, orderId: '#ORD-10175', customer: 'Yonas Getachew', date: 'May 16, 2024', time: '8:05 PM', status: 'Pending', amount: 'ETB 1,850' },
-    { id: 7, orderId: '#ORD-10162', customer: 'Hirut Alemu', date: 'May 16, 2024', time: '1:25 PM', status: 'Delivered', amount: 'ETB 1,850' },
-    { id: 8, orderId: '#ORD-10145', customer: 'Abeba Solomon', date: 'May 15, 2024', time: '10:40 AM', status: 'Delivered', amount: 'ETB 1,850' }
-  ];
+  const formatCurrency = (value) => `ETB ${Number(value || 0).toLocaleString()}`;
+  const formatDate = (value) => value ? new Date(value).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' }) : '';
+  const formatTime = (value) => value ? new Date(value).toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' }) : '';
 
-  const filteredOrders = dataset.filter(item => 
-    item.orderId.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    item.customer.toLowerCase().includes(searchQuery.toLowerCase())
+  useEffect(() => {
+    const loadOrders = async () => {
+      setIsLoading(true);
+      setErrorMessage('');
+
+      try {
+        const ordersData = await getOrders();
+        setOrders(ordersData);
+      } catch (error) {
+        setErrorMessage(error.response?.data?.error || 'Unable to load orders.');
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    loadOrders();
+  }, []);
+
+  const filteredOrders = orders.filter(item => 
+    item.order_number.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    (item.customer_name || '').toLowerCase().includes(searchQuery.toLowerCase())
   );
 
   return (
@@ -64,18 +79,20 @@ export const OrdersPage = ({ onSelectOrder }) => {
       </div>
 
       {/* MAIN LIST CARD CONTAINER */}
+      {errorMessage && <div style={styles.errorMessage}>{errorMessage}</div>}
+      {isLoading && <div style={styles.loadingMessage}>Loading orders...</div>}
       <div style={styles.listCard}>
         {filteredOrders.length > 0 ? (
           filteredOrders.map(order => (
             <OrderListRow 
               key={order.id}
-              orderId={order.orderId}
-              customerName={order.customer}
-              date={order.date}
-              time={order.time}
-              status={order.status}
-              amount={order.amount}
-              onClick={() => onSelectOrder && onSelectOrder(order.orderId)}
+              orderId={order.order_number}
+              customerName={order.customer_name || 'Customer'}
+              date={formatDate(order.created_at)}
+              time={formatTime(order.created_at)}
+              status={order.status || 'pending'}
+              amount={formatCurrency(order.total)}
+              onClick={() => onSelectOrder && onSelectOrder(order.id)}
             />
           ))
         ) : (
@@ -85,7 +102,7 @@ export const OrdersPage = ({ onSelectOrder }) => {
 
       {/* INFRASTRUCTURE CONTROLS LINE FOOTER */}
       <div style={styles.tableFooter}>
-        <span style={styles.paginationText}>Showing 1 to {filteredOrders.length} of {dataset.length} orders</span>
+        <span style={styles.paginationText}>Showing 1 to {filteredOrders.length} of {orders.length} orders</span>
         <button style={styles.viewAllBtn}>View all orders ›</button>
       </div>
 

@@ -1,10 +1,10 @@
 class Product < ApplicationRecord
   belongs_to :user
-  belongs_to :shop
+  belongs_to :shop, optional: true
   belongs_to :category, optional: true
 
-  has_many :order_items
-  has_many :cart_items
+  has_many :order_items, dependent: :destroy
+  has_many :cart_items, dependent: :destroy
 
   has_many_attached :images
 

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { StatCard } from '../components/StatCard';
 import { ProductRow } from '../components/ProductRow';
 import { AddProductPage } from '../../products/pages/AddProductPage';
@@ -6,6 +6,8 @@ import { ProductDetailsPage } from '../../products/pages/ProductDetailsPage';
 import { OrdersPage } from '../../orders/pages/OrdersPage';
 import { OrderDetailsPage } from '../../orders/pages/OrderDetailsPage';
 import { EditProfilePage } from '../../profile/pages/EditProfilePage';
+import { getDashboardStats } from '../api/getDashboardStats';
+import { getMyShop } from '../api/getMyShop';
 
 // SVG Icons Inline
 const BagIcon = () => <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4zM3 6h18M16 10a4 4 0 0 1-8 0" /></svg>;
@@ -17,12 +19,50 @@ export const DashboardPage = () => {
   const [view, setView] = useState('dashboard');
   const [activeTab, setActiveTab] = useState('dashboard');
   const [selectedProduct, setSelectedProduct] = useState(null);
+  const [selectedOrderId, setSelectedOrderId] = useState(null);
+  const [stats, setStats] = useState(null);
+  const [shop, setShop] = useState(null);
+  const [products, setProducts] = useState([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const [errorMessage, setErrorMessage] = useState('');
+
+  const loadDashboard = async () => {
+    setIsLoading(true);
+    setErrorMessage('');
+
+    try {
+      const statsData = await getDashboardStats();
+      setStats(statsData);
+      setProducts(statsData.recent_products || []);
+
+      try {
+        const shopData = await getMyShop();
+        setShop(shopData);
+      } catch {
+        setShop(null);
+      }
+    } catch (error) {
+      setErrorMessage(error.response?.data?.error || 'Unable to load dashboard data.');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    loadDashboard();
+  }, []);
+
+  const formatCurrency = (value) => `ETB ${Number(value || 0).toLocaleString()}`;
+  const getInitials = (name = '') => name.split(' ').map((part) => part[0]).join('').slice(0, 2).toUpperCase() || 'SH';
 
   if (view === 'add-product') {
     return (
       <AddProductPage
         onCancel={() => setView('dashboard')}
-        onSaveSuccess={() => setView('dashboard')}
+        onSaveSuccess={() => {
+          setView('dashboard');
+          loadDashboard();
+        }}
       />
     );
   }
@@ -31,6 +71,7 @@ export const DashboardPage = () => {
     return (
       <div style={{ minHeight: '100vh' }}>
         <ProductDetailsPage
+          productId={selectedProduct?.id}
           onBack={() => setView('dashboard')}
         />
         <nav style={styles.bottomNav}>
@@ -60,7 +101,7 @@ export const DashboardPage = () => {
   if (view === 'order-details') {
     return (
       <div style={{ minHeight: '100vh' }}>
-        <OrderDetailsPage onBack={() => setView('dashboard')} />
+        <OrderDetailsPage orderId={selectedOrderId} onBack={() => setView('dashboard')} />
         <nav style={styles.bottomNav}>
           <button onClick={() => { setView('dashboard'); setActiveTab('dashboard'); }} style={{ ...styles.navItem, color: '#00a84e' }}>
             <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" strokeWidth="2">
@@ -87,7 +128,7 @@ export const DashboardPage = () => {
 
   if (activeTab !== 'dashboard') {
     const page = activeTab === 'orders'
-      ? <OrdersPage onSelectOrder={() => setView('order-details')} />
+      ? <OrdersPage onSelectOrder={(orderId) => { setSelectedOrderId(orderId); setView('order-details'); }} />
       : <EditProfilePage onCancel={() => setActiveTab('dashboard')} onSave={() => setActiveTab('dashboard')} />;
 
     return (
@@ -118,14 +159,6 @@ export const DashboardPage = () => {
     );
   }
 
-  const productsData = [
-    { id: 1, name: 'Elegant Green Dress', price: 'ETB 1,850', stock: 12 },
-    { id: 2, name: 'Classic White T-Shirt', price: 'ETB 950', stock: 25 },
-    { id: 3, name: 'Genuine Leather Handbag', price: 'ETB 2,750', stock: 5 },
-    { id: 4, name: 'Urban White Sneakers', price: 'ETB 2,100', stock: 18 },
-    { id: 5, name: 'Stylish Sunglasses', price: 'ETB 1,200', stock: 40 },
-  ];
-
   return (
     <div style={styles.container}>
       {/* GLOBAL HEADER */}
@@ -155,29 +188,36 @@ export const DashboardPage = () => {
       {/* SHOP CARD BANNER */}
       <section style={styles.shopCard}>
         <div style={{ ...styles.shopLogoBlock, backgroundColor: '#dbeafe' }}>
-          <span style={styles.shopLogoText}>AF</span>
+          {shop?.logo_url ? (
+            <img src={shop.logo_url} alt={shop.name} style={styles.shopLogoImage} />
+          ) : (
+            <span style={styles.shopLogoText}>{getInitials(shop?.name)}</span>
+          )}
         </div>
         <div style={styles.shopMeta}>
-          <h2 style={styles.shopName}>Abeba Fashion</h2>
-          <span style={styles.badge}>Active</span>
+          <h2 style={styles.shopName}>{shop?.name || 'No shop created yet'}</h2>
+          <span style={styles.badge}>{shop?.status || 'Setup needed'}</span>
           <div style={styles.metaRow}>
             <span style={{ ...styles.metaIcon, backgroundColor: '#fef3c7' }}>T</span>
-            <p style={styles.metaText}>Fashion & Apparel</p>
+            <p style={styles.metaText}>{shop?.category || 'Shop category'}</p>
           </div>
           <div style={styles.metaRow}>
             <span style={{ ...styles.metaIcon, backgroundColor: '#d1fae5' }}>C</span>
-            <p style={styles.metaText}>Member since May 2024</p>
+            <p style={styles.metaText}>{shop?.city || shop?.region || 'Location not set'}</p>
           </div>
         </div>
         <button style={styles.dotMenuBtn}>⋮</button>
       </section>
 
+      {errorMessage && <div style={styles.errorMessage}>{errorMessage}</div>}
+      {isLoading && <div style={styles.loadingMessage}>Loading dashboard...</div>}
+
       {/* FOUR METRIC ROW - HORIZONTAL SCROLL */}
       <section style={styles.statsRow}>
-        <StatCard icon={BagIcon} iconBg="#f2fbf5" iconColor="#00a84e" title="Total Products" value="42" />
-        <StatCard icon={OrderIcon} iconBg="#eff6ff" iconColor="#2563eb" title="Total Orders" value="128" />
-        <StatCard icon={EarningsIcon} iconBg="#fffbeb" iconColor="#d97706" title="Total Sales" value="ETB 28,450" />
-        <StatCard icon={EyeIcon} iconBg="#faf5ff" iconColor="#7c3aed" title="Shop Views" value="1,245" />
+        <StatCard icon={BagIcon} iconBg="#f2fbf5" iconColor="#00a84e" title="Total Products" value={stats?.total_products ?? 0} />
+        <StatCard icon={OrderIcon} iconBg="#eff6ff" iconColor="#2563eb" title="Total Orders" value={stats?.total_orders ?? 0} />
+        <StatCard icon={EarningsIcon} iconBg="#fffbeb" iconColor="#d97706" title="Total Sales" value={formatCurrency(stats?.total_sales)} />
+        <StatCard icon={EyeIcon} iconBg="#faf5ff" iconColor="#7c3aed" title="Shop Views" value={stats?.shop_views ?? 0} />
       </section>
 
       {/* PRODUCTS SECTION LIST CONTAINER */}
@@ -187,18 +227,20 @@ export const DashboardPage = () => {
           <button style={styles.viewAllProductsBtn}>View all products ›</button>
         </div>
         <div style={styles.productsListCard}>
-          {productsData.map(product => (
+          {products.length > 0 ? products.map(product => (
             <ProductRow 
               key={product.id}
               name={product.name}
-              price={product.price}
-              stockCount={product.stock}
+              price={formatCurrency(product.price)}
+              stockCount={product.quantity || 0}
               onClick={() => {
                 setSelectedProduct(product);
                 setView('product-details');
               }}
             />
-          ))}
+          )) : (
+            <div style={styles.emptyProducts}>No products yet.</div>
+          )}
         </div>
       </section>
 
@@ -314,6 +356,12 @@ const styles = {
     alignItems: 'center',
     justifyContent: 'center',
     flexShrink: 0,
+    overflow: 'hidden',
+  },
+  shopLogoImage: {
+    width: '100%',
+    height: '100%',
+    objectFit: 'cover',
   },
   shopLogoText: {
     fontSize: '18px',
@@ -354,6 +402,24 @@ const styles = {
     flexShrink: 0,
   },
   metaText: { margin: 0, fontSize: '11px', color: '#66767e' },
+  errorMessage: {
+    backgroundColor: '#fef2f2',
+    color: '#b91c1c',
+    border: '1px solid #fecaca',
+    borderRadius: '8px',
+    padding: '10px 12px',
+    fontSize: '12px',
+    marginBottom: '14px',
+  },
+  loadingMessage: {
+    backgroundColor: '#eff6ff',
+    color: '#1d4ed8',
+    border: '1px solid #bfdbfe',
+    borderRadius: '8px',
+    padding: '10px 12px',
+    fontSize: '12px',
+    marginBottom: '14px',
+  },
   dotMenuBtn: {
     position: 'absolute',
     right: '14px',
@@ -391,6 +457,12 @@ const styles = {
     border: '1px solid #f0f4f8',
     borderRadius: '14px',
     padding: '0 14px',
+  },
+  emptyProducts: {
+    padding: '20px',
+    textAlign: 'center',
+    color: '#66767e',
+    fontSize: '13px',
   },
   addProductBanner: {
     backgroundColor: '#ffffff',

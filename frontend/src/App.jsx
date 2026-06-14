@@ -1,6 +1,5 @@
 import { useState } from 'react';
 import { UsersPage } from './features/users/pages/UsersPage';
-import { ProductsPage } from './features/products/pages/ProductsPage';
 import { SellerLandingPage } from './features/shop-creation/pages/SellerLandingPage';
 import { ShopSetupPage } from './features/shop-creation/pages/ShopSetupPage';
 import { DashboardPage } from './features/dashboard/pages/DashboardPage';
@@ -9,7 +8,6 @@ import './App.css';
 
 const NAV_ITEMS = [
   { key: 'users', label: 'Users' },
-  { key: 'products', label: 'Products' },
   { key: 'shop', label: 'Create Shop' }
 ];
 
@@ -68,7 +66,6 @@ function App() {
 
       <main className="app-content">
         {activeTab === 'users' && <UsersPage />}
-        {activeTab === 'products' && <ProductsPage />}
         {activeTab === 'shop' && shopStep === 'landing' && (
           <SellerLandingPage onCreateShopTrigger={() => setShopStep('setup')} />
         )}
