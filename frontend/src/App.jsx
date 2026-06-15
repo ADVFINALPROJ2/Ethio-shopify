@@ -3,6 +3,7 @@ import { UsersPage } from './features/users/pages/UsersPage';
 import { SellerLandingPage } from './features/shop-creation/pages/SellerLandingPage';
 import { ShopSetupPage } from './features/shop-creation/pages/ShopSetupPage';
 import { DashboardPage } from './features/dashboard/pages/DashboardPage';
+import { createShop } from './features/shop-creation/api/createShop';
 import { useAuth } from './features/auth/context/useAuth';
 import './App.css';
 
@@ -14,6 +15,7 @@ const NAV_ITEMS = [
 function App() {
   const [activeTab, setActiveTab] = useState('shop');
   const [shopStep, setShopStep] = useState('landing');
+  const [shopError, setShopError] = useState(null);
   const { user, isAuthenticated, isLoading, error } = useAuth();
 
   if (isLoading) {
@@ -70,7 +72,24 @@ function App() {
           <SellerLandingPage onCreateShopTrigger={() => setShopStep('setup')} />
         )}
         {activeTab === 'shop' && shopStep === 'setup' && (
-          <ShopSetupPage onBack={() => setShopStep('landing')} onComplete={() => setShopStep('dashboard')} />
+          <ShopSetupPage
+            onBack={() => setShopStep('landing')}
+            onComplete={async (formData) => {
+              setShopError(null);
+              try {
+                const payload = new FormData();
+                payload.append('shop[name]', formData.shopName);
+                payload.append('shop[category_id]', formData.category);
+                if (formData.description) payload.append('shop[description]', formData.description);
+                if (formData.logo) payload.append('shop[logo]', formData.logo);
+                await createShop(payload);
+                setShopStep('dashboard');
+              } catch (err) {
+                setShopError(err.response?.data?.errors?.join(', ') || 'Failed to create shop');
+              }
+            }}
+            error={shopError}
+          />
         )}
         {activeTab === 'shop' && shopStep === 'dashboard' && (
           <DashboardPage />
