@@ -8,7 +8,7 @@ class Shop < ApplicationRecord
   validates :slug, uniqueness: true, allow_blank: true
   validates :status, inclusion: { in: %w[pending approved rejected suspended] }, allow_blank: true
 
-  before_save :generate_slug, if: -> { name_changed? || slug.blank? }
+  before_validation :generate_slug, if: -> { name_changed? || slug.blank? }
 
   def logo_url
     return unless logo.attached?
