@@ -8,9 +8,10 @@ Rails.application.routes.draw do
   patch "me", to: "auth#update"
 
   get "dashboard/stats", to: "dashboard#stats"
-  get "shops/me", to: "shops#show"
-  patch "shops/me", to: "shops#update"
-  resources :shops, only: [ :create ]
+  get "shops/me", to: "shops#me"
+  patch "shops/me", to: "shops#update_me"
+  resources :shops, only: [ :create, :update ]
+  get "shops/:slug", to: "shops#show"
 
   resources :orders, only: [ :index, :show ]
 
