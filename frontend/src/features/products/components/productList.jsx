@@ -1,4 +1,4 @@
-export const ProductList = ({ products, isLoading, onDelete, onPurchase, onEdit, onArchive }) => {
+export const ProductList = ({ products, isLoading, onDelete, onPurchase, onEdit, onArchive, onAddToCart }) => {
   if (isLoading) return <p>Loading products from backend...</p>;
   if (products.length === 0) return <p>No products found.</p>;
 
@@ -37,6 +37,21 @@ export const ProductList = ({ products, isLoading, onDelete, onPurchase, onEdit,
                   }}
                 >
                   {product.quantity < 1 ? 'Out of Stock' : 'Buy Now'}
+                </button>
+                <button
+                  onClick={() => onAddToCart(product.id)}
+                  disabled={product.quantity < 1}
+                  style={{
+                    padding: '4px 10px',
+                    backgroundColor: product.quantity < 1 ? '#6c757d' : '#28a745',
+                    color: 'white',
+                    border: 'none',
+                    borderRadius: '4px',
+                    cursor: product.quantity < 1 ? 'not-allowed' : 'pointer',
+                    fontSize: '0.85em'
+                  }}
+                >
+                  Add to Cart
                 </button>
                 <button
                   onClick={() => onEdit(product)}

@@ -8,7 +8,7 @@ import { purchaseProduct } from '../api/purchaseProduct';
 import { ProductForm } from '../components/productForm';
 import { ProductList } from '../components/productList';
 
-export const ProductsPage = () => {
+export const ProductsPage = ({ onAddToCart }) => {
     const [products, setProducts] = useState([]);
     const [users, setUsers] = useState([]);
     const [isLoading, setIsLoading] = useState(true);
@@ -112,6 +112,7 @@ export const ProductsPage = () => {
                 onPurchase={handlePurchase}
                 onEdit={handleEdit}
                 onArchive={handleArchive}
+                onAddToCart={onAddToCart}
             />
         </div>
     );
