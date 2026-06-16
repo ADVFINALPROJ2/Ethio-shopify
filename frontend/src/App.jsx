@@ -79,7 +79,7 @@ function App() {
               try {
                 const payload = new FormData();
                 payload.append('shop[name]', formData.shopName);
-                payload.append('shop[category_id]', formData.category);
+                payload.append('shop[category_id]', formData.categoryId);
                 if (formData.description) payload.append('shop[description]', formData.description);
                 if (formData.logo) payload.append('shop[logo]', formData.logo);
                 await createShop(payload);
