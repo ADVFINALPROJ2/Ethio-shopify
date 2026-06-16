@@ -56,7 +56,7 @@ export const ShopSetupPage = ({ onBack, onComplete, error }) => {
   const validateStep = () => {
     const newErrors = {};
     if (step === 1 && !formData.shopName.trim()) newErrors.shopName = 'Shop name is required';
-    if (step === 2 && !formData.categoryID) newErrors.categoryID = 'Please select a category';
+    if (step === 2 && !formData.categoryId) newErrors.categoryId = 'Please select a category';
     return newErrors;
   };
 
