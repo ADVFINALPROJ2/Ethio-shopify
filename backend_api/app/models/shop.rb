@@ -6,8 +6,7 @@ class Shop < ApplicationRecord
 
   validates :name, presence: true
   validates :slug, uniqueness: true, allow_blank: true
-  validates :status, inclusion: { in: %w[pending approved rejected suspended] }, allow_blank: true
-
+  validates :category_id, presence: true
   before_validation :generate_slug, if: -> { name_changed? || slug.blank? }
 
   def logo_url

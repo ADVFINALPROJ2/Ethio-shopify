@@ -14,6 +14,7 @@ Rails.application.routes.draw do
   get "shops/:slug", to: "shops#show"
 
   resources :orders, only: [ :index, :show ]
+  resources :categories, only: [:index]
 
   resources :users
   resources :products do

@@ -66,7 +66,6 @@ class ShopsController < ApplicationController
       :country,
       :region,
       :city,
-      :status,
       :logo
     )
   end

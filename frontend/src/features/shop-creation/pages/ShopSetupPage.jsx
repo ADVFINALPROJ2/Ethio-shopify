@@ -28,11 +28,20 @@ const STEPS = [
   { key: 'description', label: 'Description' },
 ];
 
+const categories = [
+  { id: 1, name: 'Electronics & Gadgets' },
+  { id: 2, name: 'Clothing & Apparel' },
+  { id: 3, name: 'Cosmetics & Beauty' },
+  { id: 4, name: 'Food & Groceries' },
+  { id: 5, name: 'Books & Stationery' },
+  { id: 6, name: 'Others' }
+];
+
 export const ShopSetupPage = ({ onBack, onComplete, error }) => {
   const [step, setStep] = useState(1);
   const [formData, setFormData] = useState({
     shopName: '',
-    category: '',
+    categoryId: null,
     description: '',
     logo: null,
   });
@@ -47,7 +56,7 @@ export const ShopSetupPage = ({ onBack, onComplete, error }) => {
   const validateStep = () => {
     const newErrors = {};
     if (step === 1 && !formData.shopName.trim()) newErrors.shopName = 'Shop name is required';
-    if (step === 2 && !formData.category) newErrors.category = 'Please select a category';
+    if (step === 2 && !formData.categoryID) newErrors.categoryID = 'Please select a category';
     return newErrors;
   };
 
@@ -77,15 +86,46 @@ export const ShopSetupPage = ({ onBack, onComplete, error }) => {
 
   const handleFileChange = (e) => {
     const file = e.target.files[0];
-    if (file) {
-      if (file.size > 2 * 1024 * 1024) {
-        setErrors(prev => ({ ...prev, logo: 'File too large. Max 2MB.' }));
-        return;
-      }
-      setField('logo', file);
-      setLogoPreview(URL.createObjectURL(file));
-      setErrors(prev => ({ ...prev, logo: null }));
+
+    if (!file) return;
+
+    if (file.size > 2 * 1024 * 1024) {
+      setErrors((prev) => ({
+        ...prev,
+        logo: 'File too large. Max 2MB.',
+      }));
+
+      e.target.value = '';
+      return;
     }
+
+    if (logoPreview) {
+      URL.revokeObjectURL(logoPreview);
+    }
+
+    const preview = URL.createObjectURL(file);
+
+    setLogoPreview(preview);
+    setField('logo', file);
+
+    setErrors((prev) => ({
+      ...prev,
+      logo: null,
+    }));
+  };
+
+  const removeLogo = () => {
+    if (logoPreview) {
+      URL.revokeObjectURL(logoPreview);
+    }
+
+    setLogoPreview(null);
+    setField('logo', null);
+
+    setErrors((prev) => ({
+      ...prev,
+      logo: null,
+    }));
   };
 
   const handleSubmit = () => {
@@ -150,26 +190,26 @@ export const ShopSetupPage = ({ onBack, onComplete, error }) => {
           <div style={styles.stepBlock}>
             <h2 style={styles.title}>Pick a category</h2>
             <p style={styles.subtitle}>What type of products do you sell?</p>
-            {['Electronics & Gadgets', 'Clothing & Apparel', 'Cosmetics & Beauty', 'Food & Groceries'].map(cat => (
+            {categories.map(cat => (
               <button
-                key={cat}
-                onClick={() => setField('category', cat)}
+                key={cat.id}
+                onClick={() => setField('categoryId', cat.id)}
                 style={{
                   ...styles.categoryCard,
-                  borderColor: formData.category === cat ? '#00a84e' : '#e2e8f0',
-                  backgroundColor: formData.category === cat ? '#edf9f2' : '#fff',
+                  borderColor: formData.categoryId === cat.id ? '#00a84e' : '#e2e8f0',
+                  backgroundColor: formData.categoryId === cat.id ? '#edf9f2' : '#fff',
                 }}
               >
                 <span style={{
                   ...styles.radio,
-                  borderColor: formData.category === cat ? '#00a84e' : '#ccd4d8',
+                  borderColor: formData.categoryId === cat.id ? '#00a84e' : '#ccd4d8',
                 }}>
-                  {formData.category === cat && <span style={styles.radioInner} />}
+                  {formData.categoryId === cat.id && <span style={styles.radioInner} />}
                 </span>
-                {cat}
+                {cat.name}
               </button>
             ))}
-            {errors.category && <span style={styles.error}>{errors.category}</span>}
+            {errors.categoryId && <span style={styles.error}>{errors.categoryId}</span>}
           </div>
         )}
 
