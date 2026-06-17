@@ -15,8 +15,23 @@ class Shop < ApplicationRecord
     Rails.application.routes.url_helpers.rails_blob_url(logo, only_path: true)
   end
 
+  def telegram_url
+    "https://t.me/EthShopify_bot?startapp=shop_#{slug}"
+  end
+
   def api_json
-    as_json(except: [ :created_at, :updated_at ]).merge("logo_url" => logo_url)
+    as_json(
+      except: [ :created_at, :updated_at ],
+      include: {
+        products: {
+          except: [ :created_at, :updated_at ],
+          methods: [ :image_urls ]
+        }
+      }
+    ).merge(
+      "logo_url" => logo_url,
+      "telegram_url" => telegram_url
+    )
   end
 
   private

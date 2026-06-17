@@ -3,6 +3,7 @@ import { UsersPage } from './features/users/pages/UsersPage';
 import { SellerLandingPage } from './features/shop-creation/pages/SellerLandingPage';
 import { ShopSetupPage } from './features/shop-creation/pages/ShopSetupPage';
 import { DashboardPage } from './features/dashboard/pages/DashboardPage';
+import { StorefrontPage } from './features/storefront/pages/StorefrontPage';
 import { createShop } from './features/shop-creation/api/createShop';
 import { useAuth } from './features/auth/context/useAuth';
 import { getMyShop } from './features/dashboard/api/getMyShop';
@@ -14,6 +15,11 @@ const NAV_ITEMS = [
 ];
 
 function App() {
+  const startParam = window.Telegram?.WebApp?.initDataUnsafe?.start_param || '';
+  const [storefrontSlug, setStorefrontSlug] = useState(() => {
+    return startParam.startsWith('shop_') ? startParam.replace('shop_', '') : null;
+  });
+
   const [activeTab, setActiveTab] = useState('shop');
   const [shopStep, setShopStep] = useState('landing');
   const [shopError, setShopError] = useState(null);
@@ -22,7 +28,7 @@ function App() {
   const { user, isAuthenticated, isLoading, error } = useAuth();
 
   useEffect(() => {
-    if (isAuthenticated) {
+    if (isAuthenticated && !storefrontSlug) {
       setIsCheckingShop(true);
       getMyShop()
         .then(() => {
@@ -67,6 +73,10 @@ function App() {
     );
   }
 
+  if (storefrontSlug) {
+    return <StorefrontPage slug={storefrontSlug} />;
+  }
+
   return (
     <div className="app-shell">
       <header className="app-header">
@@ -109,6 +119,13 @@ function App() {
                 payload.append('shop[name]', formData.shopName);
                 payload.append('shop[category_id]', formData.categoryId);
                 if (formData.description) payload.append('shop[description]', formData.description);
+                if (formData.email) payload.append('shop[email]', formData.email);
+                if (formData.phoneCode) payload.append('shop[phone_code]', formData.phoneCode);
+                if (formData.phoneNumber) payload.append('shop[phone_number]', formData.phoneNumber);
+                if (formData.country) payload.append('shop[country]', formData.country);
+                if (formData.region) payload.append('shop[region]', formData.region);
+                if (formData.city) payload.append('shop[city]', formData.city);
+                if (formData.address) payload.append('shop[address]', formData.address);
                 if (formData.logo) payload.append('shop[logo]', formData.logo);
                 await createShop(payload);
                 setHasShop(true);

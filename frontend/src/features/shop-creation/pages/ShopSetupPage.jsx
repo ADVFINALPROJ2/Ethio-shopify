@@ -22,10 +22,13 @@ const CloudUploadIcon = () => (
 );
 
 const STEPS = [
-  { key: 'shopName', label: 'Shop Name' },
+  { key: 'shopName', label: 'Name' },
   { key: 'category', label: 'Category' },
+  { key: 'contact', label: 'Contact' },
+  { key: 'location', label: 'Location' },
   { key: 'logo', label: 'Logo' },
   { key: 'description', label: 'Description' },
+  { key: 'review', label: 'Review' },
 ];
 
 const categories = [
@@ -42,6 +45,13 @@ export const ShopSetupPage = ({ onBack, onComplete, error }) => {
   const [formData, setFormData] = useState({
     shopName: '',
     categoryId: null,
+    email: '',
+    phoneCode: '+251',
+    phoneNumber: '',
+    country: 'Ethiopia',
+    region: '',
+    city: '',
+    address: '',
     description: '',
     logo: null,
   });
@@ -57,6 +67,21 @@ export const ShopSetupPage = ({ onBack, onComplete, error }) => {
     const newErrors = {};
     if (step === 1 && !formData.shopName.trim()) newErrors.shopName = 'Shop name is required';
     if (step === 2 && !formData.categoryId) newErrors.categoryId = 'Please select a category';
+
+    if (step === 3) {
+      if (!formData.phoneNumber.trim()) {
+        newErrors.phoneNumber = 'Phone number is required';
+      }
+
+      if (
+        formData.email.trim() &&
+        !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email.trim())
+      ) {
+        newErrors.email = 'Please enter a valid email address';
+      }
+    }
+
+    if (step === 4 && !formData.city.trim()) newErrors.city = 'City is required';
     return newErrors;
   };
 
@@ -69,7 +94,7 @@ export const ShopSetupPage = ({ onBack, onComplete, error }) => {
     if (window.Telegram?.WebApp) {
       window.Telegram.WebApp.HapticFeedback.impactOccurred('light');
     }
-    if (step < 4) {
+    if (step < STEPS.length) {
       setStep(s => s + 1);
     } else {
       handleSubmit();
@@ -90,42 +115,16 @@ export const ShopSetupPage = ({ onBack, onComplete, error }) => {
     if (!file) return;
 
     if (file.size > 2 * 1024 * 1024) {
-      setErrors((prev) => ({
-        ...prev,
-        logo: 'File too large. Max 2MB.',
-      }));
-
+      setErrors(prev => ({ ...prev, logo: 'File too large. Max 2MB.' }));
       e.target.value = '';
       return;
     }
 
-    if (logoPreview) {
-      URL.revokeObjectURL(logoPreview);
-    }
+    if (logoPreview) URL.revokeObjectURL(logoPreview);
 
-    const preview = URL.createObjectURL(file);
-
-    setLogoPreview(preview);
+    setLogoPreview(URL.createObjectURL(file));
     setField('logo', file);
-
-    setErrors((prev) => ({
-      ...prev,
-      logo: null,
-    }));
-  };
-
-  const removeLogo = () => {
-    if (logoPreview) {
-      URL.revokeObjectURL(logoPreview);
-    }
-
-    setLogoPreview(null);
-    setField('logo', null);
-
-    setErrors((prev) => ({
-      ...prev,
-      logo: null,
-    }));
+    setErrors(prev => ({ ...prev, logo: null }));
   };
 
   const handleSubmit = () => {
@@ -160,11 +159,7 @@ export const ShopSetupPage = ({ onBack, onComplete, error }) => {
             }}>
               {i + 1 < step ? <CheckIcon /> : i + 1}
             </div>
-            <span style={{
-              ...styles.dotLabel,
-              color: i + 1 === step ? '#0e1e25' : '#94a3b8',
-              fontWeight: i + 1 === step ? '600' : '400',
-            }}>{s.label}</span>
+            {/* Hiding labels on mobile to prevent clutter with 7 steps, optionally keeping it simple */}
           </div>
         ))}
       </div>
@@ -215,6 +210,75 @@ export const ShopSetupPage = ({ onBack, onComplete, error }) => {
 
         {step === 3 && (
           <div style={styles.stepBlock}>
+            <h2 style={styles.title}>Contact Information</h2>
+            <p style={styles.subtitle}>How can customers reach you?</p>
+
+            <div style={styles.inputGroup}>
+              <label style={styles.label}>Phone Number</label>
+              <div style={{ display: 'flex', gap: '8px' }}>
+                <input
+                  type="text"
+                  value={formData.phoneCode}
+                  onChange={e => setField('phoneCode', e.target.value)}
+                  style={{ ...styles.input, width: '80px', flexShrink: 0 }}
+                />
+                <input
+                  type="tel"
+                  value={formData.phoneNumber}
+                  onChange={e => setField('phoneNumber', e.target.value)}
+                  placeholder="911 234 567"
+                  style={{ ...styles.input, flex: 1 }}
+                  autoFocus
+                />
+              </div>
+              {errors.phoneNumber && <span style={styles.error}>{errors.phoneNumber}</span>}
+            </div>
+
+            <div style={styles.inputGroup}>
+              <label style={styles.label}>Email (Optional)</label>
+              <input
+                type="email"
+                value={formData.email}
+                onChange={e => setField('email', e.target.value)}
+                placeholder="store@example.com"
+                style={styles.input}
+              />
+              {errors.email && <span style={styles.error}>{errors.email}</span>}
+            </div>
+          </div>
+        )}
+
+        {step === 4 && (
+          <div style={styles.stepBlock}>
+            <h2 style={styles.title}>Shop Location</h2>
+            <p style={styles.subtitle}>Where is your business located?</p>
+
+            <div style={{ display: 'flex', gap: '12px' }}>
+              <div style={{ ...styles.inputGroup, flex: 1 }}>
+                <label style={styles.label}>Country</label>
+                <input type="text" value={formData.country} onChange={e => setField('country', e.target.value)} style={styles.input} />
+              </div>
+              <div style={{ ...styles.inputGroup, flex: 1 }}>
+                <label style={styles.label}>Region (Optional)</label>
+                <input type="text" value={formData.region} onChange={e => setField('region', e.target.value)} style={styles.input} />
+              </div>
+            </div>
+
+            <div style={styles.inputGroup}>
+              <label style={styles.label}>City</label>
+              <input type="text" value={formData.city} onChange={e => setField('city', e.target.value)} placeholder="e.g. Addis Ababa" style={styles.input} autoFocus />
+              {errors.city && <span style={styles.error}>{errors.city}</span>}
+            </div>
+
+            <div style={styles.inputGroup}>
+              <label style={styles.label}>Street Address (Optional)</label>
+              <input type="text" value={formData.address} onChange={e => setField('address', e.target.value)} placeholder="e.g. Bole Road, House 123" style={styles.input} />
+            </div>
+          </div>
+        )}
+
+        {step === 5 && (
+          <div style={styles.stepBlock}>
             <h2 style={styles.title}>Add your logo</h2>
             <p style={styles.subtitle}>Upload a logo to make your shop recognizable.</p>
             <label style={styles.uploadArea}>
@@ -238,7 +302,7 @@ export const ShopSetupPage = ({ onBack, onComplete, error }) => {
           </div>
         )}
 
-        {step === 4 && (
+        {step === 6 && (
           <div style={styles.stepBlock}>
             <h2 style={styles.title}>Describe your shop</h2>
             <p style={styles.subtitle}>Tell customers what makes your shop special.</p>
@@ -257,12 +321,56 @@ export const ShopSetupPage = ({ onBack, onComplete, error }) => {
             </div>
           </div>
         )}
+
+        {step === 7 && (
+          <div style={styles.stepBlock}>
+            <h2 style={styles.title}>Review & Create</h2>
+            <p style={styles.subtitle}>Make sure everything looks good before launching your shop.</p>
+
+            <div style={styles.reviewCard}>
+              {logoPreview && (
+                <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '16px' }}>
+                  <img src={logoPreview} alt="Shop logo" style={{ width: '80px', height: '80px', borderRadius: '50%', objectFit: 'cover' }} />
+                </div>
+              )}
+
+              <div style={styles.reviewRow}>
+                <span style={styles.reviewLabel}>Shop Name</span>
+                <span style={styles.reviewValue}>{formData.shopName}</span>
+              </div>
+              <div style={styles.reviewRow}>
+                <span style={styles.reviewLabel}>Category</span>
+                <span style={styles.reviewValue}>{categories.find(c => c.id === formData.categoryId)?.name}</span>
+              </div>
+              <div style={styles.reviewRow}>
+                <span style={styles.reviewLabel}>Phone</span>
+                <span style={styles.reviewValue}>{formData.phoneCode} {formData.phoneNumber}</span>
+              </div>
+              {formData.email && (
+                <div style={styles.reviewRow}>
+                  <span style={styles.reviewLabel}>Email</span>
+                  <span style={styles.reviewValue}>{formData.email}</span>
+                </div>
+              )}
+              <div style={styles.reviewRow}>
+                <span style={styles.reviewLabel}>Location</span>
+                <span style={styles.reviewValue}>{[formData.city, formData.region, formData.country].filter(Boolean).join(', ')}</span>
+              </div>
+              {formData.description && (
+                <div style={{ ...styles.reviewRow, flexDirection: 'column', alignItems: 'flex-start', gap: '4px' }}>
+                  <span style={styles.reviewLabel}>Description</span>
+                  <span style={{ ...styles.reviewValue, textAlign: 'left', fontSize: '13px' }}>{formData.description}</span>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
       </div>
 
       {error && <p style={styles.errorBanner}>{error}</p>}
 
       <button onClick={handleNext} style={styles.nextButton}>
-        {step < 4 ? 'Continue' : 'Create Shop'}
+        {step < STEPS.length ? 'Continue' : 'Create Shop'}
       </button>
     </div>
   );
@@ -315,7 +423,7 @@ const styles = {
   stepDots: {
     display: 'flex',
     justifyContent: 'space-between',
-    marginBottom: '32px',
+    marginBottom: '24px',
   },
   dotWrapper: {
     display: 'flex',
@@ -324,19 +432,15 @@ const styles = {
     gap: '6px',
   },
   dot: {
-    width: '28px',
-    height: '28px',
+    width: '24px',
+    height: '24px',
     borderRadius: '50%',
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
-    fontSize: '13px',
+    fontSize: '11px',
     fontWeight: '700',
     transition: 'all 0.2s ease',
-  },
-  dotLabel: {
-    fontSize: '11px',
-    transition: 'color 0.2s ease',
   },
   content: {
     flex: 1,
@@ -345,6 +449,7 @@ const styles = {
     display: 'flex',
     flexDirection: 'column',
     gap: '16px',
+    marginBottom: '20px',
   },
   title: {
     fontSize: '22px',
@@ -357,6 +462,16 @@ const styles = {
     color: '#66767e',
     margin: 0,
     lineHeight: '1.4',
+  },
+  inputGroup: {
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '6px',
+  },
+  label: {
+    fontSize: '13px',
+    fontWeight: '600',
+    color: '#4a5568',
   },
   input: {
     width: '100%',
@@ -467,6 +582,33 @@ const styles = {
     fontSize: '11px',
     color: '#94a3b8',
   },
+  reviewCard: {
+    backgroundColor: '#f8fafc',
+    border: '1px solid #e2e8f0',
+    borderRadius: '12px',
+    padding: '16px',
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '12px'
+  },
+  reviewRow: {
+    display: 'flex',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    borderBottom: '1px solid #e2e8f0',
+    paddingBottom: '8px'
+  },
+  reviewLabel: {
+    fontSize: '13px',
+    color: '#66767e',
+    fontWeight: '500'
+  },
+  reviewValue: {
+    fontSize: '14px',
+    color: '#0e1e25',
+    fontWeight: '600',
+    textAlign: 'right'
+  },
   nextButton: {
     display: 'flex',
     alignItems: 'center',
@@ -486,7 +628,6 @@ const styles = {
   error: {
     fontSize: '12px',
     color: '#ef4444',
-    marginTop: '-8px',
   },
   errorBanner: {
     fontSize: '13px',
@@ -496,5 +637,6 @@ const styles = {
     borderRadius: '8px',
     textAlign: 'center',
     margin: 0,
+    marginBottom: '16px'
   },
 };

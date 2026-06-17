@@ -209,6 +209,51 @@ export const DashboardPage = () => {
         <button style={styles.dotMenuBtn}>⋮</button>
       </section>
 
+      {/* STORE LINK CARD */}
+      {shop?.telegram_url && (
+        <section style={styles.storeLinkCard}>
+          <div style={styles.storeLinkHeader}>
+            <h3 style={styles.storeLinkTitle}>Share Your Store</h3>
+            <span style={styles.storeLinkBadge}>Primary Link</span>
+          </div>
+          <p style={styles.storeLinkDesc}>Share this link with your customers so they can order directly from Telegram.</p>
+          
+          <div style={styles.linkBox}>
+            <span style={styles.linkText}>{shop.telegram_url}</span>
+            <button 
+              onClick={() => {
+                navigator.clipboard.writeText(shop.telegram_url);
+                if (window.Telegram?.WebApp) window.Telegram.WebApp.HapticFeedback.notificationOccurred('success');
+              }} 
+              style={styles.copyBtn}
+            >
+              Copy
+            </button>
+          </div>
+          
+          <button 
+            onClick={() => {
+              const text = `Check out my shop ${shop.name} on Telegram!`;
+              if (window.Telegram?.WebApp?.openTelegramLink) {
+                window.Telegram.WebApp.openTelegramLink(`https://t.me/share/url?url=${encodeURIComponent(shop.telegram_url)}&text=${encodeURIComponent(text)}`);
+              } else if (navigator.share) {
+                navigator.share({
+                  title: shop.name,
+                  text: text,
+                  url: shop.telegram_url
+                });
+              } else {
+                navigator.clipboard.writeText(shop.telegram_url);
+                alert("Link copied to clipboard!");
+              }
+            }}
+            style={styles.shareBtn}
+          >
+            Share Store 🚀
+          </button>
+        </section>
+      )}
+
       {errorMessage && <div style={styles.errorMessage}>{errorMessage}</div>}
       {isLoading && <div style={styles.loadingMessage}>Loading dashboard...</div>}
 
@@ -429,6 +474,82 @@ const styles = {
     fontSize: '18px',
     color: '#66767e',
     cursor: 'pointer',
+  },
+  storeLinkCard: {
+    backgroundColor: '#ffffff',
+    border: '1px solid #f0f4f8',
+    borderRadius: '14px',
+    padding: '16px',
+    marginBottom: '20px',
+    boxShadow: '0 2px 4px rgba(0,0,0,0.02)'
+  },
+  storeLinkHeader: {
+    display: 'flex',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: '4px'
+  },
+  storeLinkTitle: {
+    fontSize: '15px',
+    fontWeight: '700',
+    color: '#0e1e25',
+    margin: 0
+  },
+  storeLinkBadge: {
+    backgroundColor: '#e0e7ff',
+    color: '#4f46e5',
+    fontSize: '10px',
+    fontWeight: '700',
+    padding: '2px 8px',
+    borderRadius: '10px'
+  },
+  storeLinkDesc: {
+    fontSize: '12px',
+    color: '#66767e',
+    margin: '0 0 12px 0'
+  },
+  linkBox: {
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    backgroundColor: '#f8fafc',
+    border: '1px solid #e2e8f0',
+    borderRadius: '8px',
+    padding: '8px 12px',
+    marginBottom: '12px'
+  },
+  linkText: {
+    fontSize: '12px',
+    color: '#0f172a',
+    whiteSpace: 'nowrap',
+    overflow: 'hidden',
+    textOverflow: 'ellipsis',
+    marginRight: '8px',
+    fontWeight: '500'
+  },
+  copyBtn: {
+    background: 'none',
+    border: 'none',
+    color: '#00a84e',
+    fontSize: '12px',
+    fontWeight: '700',
+    cursor: 'pointer',
+    padding: '4px 8px'
+  },
+  shareBtn: {
+    backgroundColor: '#00a84e',
+    color: '#fff',
+    border: 'none',
+    borderRadius: '8px',
+    padding: '10px',
+    width: '100%',
+    fontSize: '14px',
+    fontWeight: '600',
+    cursor: 'pointer',
+    display: 'flex',
+    justifyContent: 'center',
+    alignItems: 'center',
+    gap: '6px'
   },
   statsRow: {
     display: 'flex',
