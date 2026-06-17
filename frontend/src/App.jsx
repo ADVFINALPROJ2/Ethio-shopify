@@ -1,10 +1,11 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { UsersPage } from './features/users/pages/UsersPage';
 import { SellerLandingPage } from './features/shop-creation/pages/SellerLandingPage';
 import { ShopSetupPage } from './features/shop-creation/pages/ShopSetupPage';
 import { DashboardPage } from './features/dashboard/pages/DashboardPage';
 import { createShop } from './features/shop-creation/api/createShop';
 import { useAuth } from './features/auth/context/useAuth';
+import { getMyShop } from './features/dashboard/api/getMyShop';
 import './App.css';
 
 const NAV_ITEMS = [
@@ -16,9 +17,33 @@ function App() {
   const [activeTab, setActiveTab] = useState('shop');
   const [shopStep, setShopStep] = useState('landing');
   const [shopError, setShopError] = useState(null);
+  const [hasShop, setHasShop] = useState(null);
+  const [isCheckingShop, setIsCheckingShop] = useState(false);
   const { user, isAuthenticated, isLoading, error } = useAuth();
 
-  if (isLoading) {
+  useEffect(() => {
+    if (isAuthenticated) {
+      setIsCheckingShop(true);
+      getMyShop()
+        .then(() => {
+          setHasShop(true);
+        })
+        .catch((err) => {
+          if (err.response?.status === 404) {
+            setHasShop(false);
+          } else {
+            console.error('Failed to fetch shop status:', err);
+            // Default to not having a shop on error so they can try again or see the UI
+            setHasShop(false);
+          }
+        })
+        .finally(() => {
+          setIsCheckingShop(false);
+        });
+    }
+  }, [isAuthenticated]);
+
+  if (isLoading || isCheckingShop) {
     return (
       <main className="auth-screen" aria-busy="true">
         <section className="auth-panel">
@@ -60,7 +85,7 @@ function App() {
               className={activeTab === item.key ? 'is-active' : ''}
               onClick={() => setActiveTab(item.key)}
             >
-              {item.label}
+              {item.key === 'shop' ? (hasShop ? 'My Shop' : 'Create Shop') : item.label}
             </button>
           ))}
         </nav>
@@ -68,10 +93,13 @@ function App() {
 
       <main className="app-content">
         {activeTab === 'users' && <UsersPage />}
-        {activeTab === 'shop' && shopStep === 'landing' && (
+        {activeTab === 'shop' && hasShop === true && (
+          <DashboardPage />
+        )}
+        {activeTab === 'shop' && hasShop === false && shopStep === 'landing' && (
           <SellerLandingPage onCreateShopTrigger={() => setShopStep('setup')} />
         )}
-        {activeTab === 'shop' && shopStep === 'setup' && (
+        {activeTab === 'shop' && hasShop === false && shopStep === 'setup' && (
           <ShopSetupPage
             onBack={() => setShopStep('landing')}
             onComplete={async (formData) => {
@@ -83,16 +111,13 @@ function App() {
                 if (formData.description) payload.append('shop[description]', formData.description);
                 if (formData.logo) payload.append('shop[logo]', formData.logo);
                 await createShop(payload);
-                setShopStep('dashboard');
+                setHasShop(true);
               } catch (err) {
                 setShopError(err.response?.data?.errors?.join(', ') || 'Failed to create shop');
               }
             }}
             error={shopError}
           />
-        )}
-        {activeTab === 'shop' && shopStep === 'dashboard' && (
-          <DashboardPage />
         )}
       </main>
     </div>

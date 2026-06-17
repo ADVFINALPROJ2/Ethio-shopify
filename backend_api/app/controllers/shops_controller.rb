@@ -12,7 +12,12 @@ class ShopsController < ApplicationController
   end
 
   def create
-    @shop = current_user.shop || current_user.build_shop
+    if current_user.shop.present?
+      render json: { errors: ["You already have a shop."] }, status: :unprocessable_entity
+      return
+    end
+
+    @shop = current_user.build_shop
     @shop.assign_attributes(shop_params.except(:logo))
     @shop.logo.attach(shop_params[:logo]) if shop_params[:logo].present?
 
