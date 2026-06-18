@@ -38,6 +38,7 @@ class Product < ApplicationRecord
       return if quantity > low_stock_threshold
 
     LowStockAlertJob.perform_later(id)
+    end
 
     def product_category_matches_shop
       return unless shop && product_category
@@ -50,5 +51,4 @@ class Product < ApplicationRecord
       end
     end
 
-    end
 end

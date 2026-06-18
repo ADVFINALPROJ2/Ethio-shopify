@@ -92,7 +92,7 @@ class ProductsController < ApplicationController
     product.as_json(include: { user: { only: [ :id, :username, :fullname ] } })
            .merge(
              "image_urls" => product.image_urls,
-             "category_name" => product.category&.name,
+             "product_category_name" => product.product_category&.name,
              "total_sold" => product.order_items.joins(:order).where(orders: { seller_id: current_user.id }).sum(:quantity),
              "total_revenue" => product.order_items.joins(:order).where(orders: { seller_id: current_user.id }).sum("order_items.quantity * order_items.price").to_s
            )
