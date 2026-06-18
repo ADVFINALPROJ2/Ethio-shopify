@@ -1,5 +1,4 @@
 import { useState } from 'react';
-import { StorefrontPage } from './features/storefront/pages/StorefrontPage';
 import ProductsPage from './features/products/pages/ProductsPage';
 import { useAuth } from './features/auth/context/useAuth';
 import './App.css';
@@ -42,11 +41,7 @@ function App() {
     );
   }
 
-  if (storefrontSlug) {
-    return <StorefrontPage slug={storefrontSlug} />;
-  }
-
-  return <ProductsPage />;
+  return <ProductsPage slug={storefrontSlug} />;
 }
 
 export default App;

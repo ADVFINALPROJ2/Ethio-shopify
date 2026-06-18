@@ -1,34 +1,56 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import ProductFilters from '../components/ProductFilters';
 import ProductCard from '../components/ProductCard';
+import apiClient from '../../../lib/axios';
 
-const MOCK_PRODUCTS = [
-  { id: 1, name: 'Modern Sofa Set', price: 'ETB 18,900', img: 'https://images.unsplash.com/photo-1555041469-a586c61ea9bc?w=400&h=400&fit=crop' },
-  { id: 2, name: 'Indoor Plant', price: 'ETB 750', img: 'https://images.unsplash.com/photo-1485955900006-10f4d324d411?w=400&h=400&fit=crop' },
-  { id: 3, name: 'Decorative Cushion', price: 'ETB 650', img: 'https://images.unsplash.com/photo-1584100936595-c0654b55a2e2?w=400&h=400&fit=crop' },
-  { id: 4, name: 'Table Lamp', price: 'ETB 1,250', img: 'https://images.unsplash.com/photo-1507473885765-e6ed057ab6fe?w=400&h=400&fit=crop' },
-  { id: 5, name: 'Storage Basket', price: 'ETB 950', img: 'https://images.unsplash.com/photo-1585386959984-a4155224a1ad?w=400&h=400&fit=crop' },
-  { id: 6, name: 'Dining Table Set', price: 'ETB 12,500', img: 'https://images.unsplash.com/photo-1555041469-a586c61ea9bc?w=400&h=400&fit=crop' },
-  { id: 7, name: 'Wall Art Frame', price: 'ETB 550', img: 'https://images.unsplash.com/photo-1513519245088-0e12902e35ca?w=400&h=400&fit=crop' },
-  { id: 8, name: 'Throw Blanket', price: 'ETB 850', img: 'https://images.unsplash.com/photo-1555041469-a586c61ea9bc?w=400&h=400&fit=crop' },
-];
-
-export default function ProductsPage() {
-  const [cartCount, setCartCount] = useState(3);
+export default function ProductsPage({ slug }) {
+  const [shop, setShop] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [cartCount, setCartCount] = useState(0);
   const [searchQuery, setSearchQuery] = useState('');
   const [sortBy, setSortBy] = useState('popular');
   const [viewMode, setViewMode] = useState('grid');
 
-  let filteredProducts = MOCK_PRODUCTS.filter(p =>
+  useEffect(() => {
+    const fetchShop = async () => {
+      try {
+        const endpoint = slug ? `/shops/${slug}` : '/shops/me';
+        const response = await apiClient.get(endpoint);
+        setShop(response.data);
+      } catch (err) {
+        setError(err.response?.data?.error || 'Shop not found');
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchShop();
+  }, [slug]);
+
+  if (loading) {
+    return (
+      <div style={styles.centerContainer}>
+        <div style={styles.spinner}></div>
+        <p style={{ color: '#66767e', marginTop: '12px' }}>Loading storefront...</p>
+      </div>
+    );
+  }
+
+  if (error || !shop) {
+    return (
+      <div style={styles.centerContainer}>
+        <h2 style={{ color: '#0e1e25' }}>Oops!</h2>
+        <p style={{ color: '#66767e' }}>{error || 'This shop does not exist or is unavailable.'}</p>
+      </div>
+    );
+  }
+
+  let filteredProducts = (shop.products || []).filter(p =>
     p.name.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
   if (sortBy === 'price_low_high') {
-    filteredProducts.sort((a, b) => {
-      const priceA = parseInt(a.price.replace(/[^0-9]/g, ''), 10);
-      const priceB = parseInt(b.price.replace(/[^0-9]/g, ''), 10);
-      return priceA - priceB;
-    });
+    filteredProducts.sort((a, b) => Number(a.price) - Number(b.price));
   } else if (sortBy === 'newest') {
     filteredProducts.sort((a, b) => b.id - a.id);
   }
@@ -50,7 +72,7 @@ export default function ProductsPage() {
             <circle cx="11" cy="11" r="8" /><line x1="21" y1="21" x2="16.65" y2="16.65" />
           </svg>
           <input
-            type="text"
+            type="search"
             aria-label="Search in this shop"
             placeholder="Search in this shop..."
             value={searchQuery}
@@ -73,13 +95,19 @@ export default function ProductsPage() {
       {/* Store Info Banner */}
       <section style={styles.storeBanner}>
         <div style={styles.storeAvatar}>
-          <span role="img" aria-label="store">🏪</span>
+          {shop.logo_url ? (
+            <img src={shop.logo_url} alt={shop.name} style={{width: '100%', height: '100%', objectFit: 'cover', borderRadius: '12px'}} />
+          ) : (
+            <span role="img" aria-label="store">🏪</span>
+          )}
         </div>
         <div style={styles.storeInfo}>
-          <h1 style={styles.storeName}>Green Life Store</h1>
-          <p style={styles.storeMeta}>Home & Living &bull; Addis Ababa, Ethiopia</p>
+          <h1 style={styles.storeName}>{shop.name}</h1>
+          <p style={styles.storeMeta}>
+            {[shop.city, shop.region, shop.country].filter(Boolean).join(', ') || 'Location not specified'}
+          </p>
           <p style={styles.storeDescription}>
-            Quality home & living products to make your home beautiful and comfortable.
+            {shop.description || 'Welcome to our store!'}
           </p>
         </div>
       </section>
@@ -101,9 +129,14 @@ export default function ProductsPage() {
       <main style={styles.gridContainer}>
         {filteredProducts.length > 0 ? (
           <div style={viewMode === 'list' ? { ...styles.grid, gridTemplateColumns: '1fr' } : styles.grid}>
-            {filteredProducts.map((product) => (
-              <ProductCard key={product.id} product={product} onAddToCart={handleAddToCart} />
-            ))}
+            {filteredProducts.map((product) => {
+              const formattedProduct = {
+                ...product,
+                price: `ETB ${Number(product.price || 0).toLocaleString()}`,
+                img: product.image_urls?.[0]
+              };
+              return <ProductCard key={product.id} product={formattedProduct} onAddToCart={handleAddToCart} />
+            })}
           </div>
         ) : (
           <div style={styles.emptyState}>
@@ -147,6 +180,23 @@ const styles = {
     margin: '0 auto',
     position: 'relative',
     paddingBottom: '80px',
+  },
+  centerContainer: {
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'center',
+    justifyContent: 'center',
+    minHeight: '100vh',
+    backgroundColor: '#f8fafc',
+    textAlign: 'center',
+    padding: '20px'
+  },
+  spinner: {
+    width: '32px',
+    height: '32px',
+    border: '3px solid #e2e8f0',
+    borderTop: '3px solid #00a84e',
+    borderRadius: '50%',
   },
   header: {
     display: 'flex',
