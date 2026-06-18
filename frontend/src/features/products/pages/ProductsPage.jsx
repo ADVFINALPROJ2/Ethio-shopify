@@ -14,12 +14,28 @@ const MOCK_PRODUCTS = [
 ];
 
 export default function ProductsPage() {
-  const [cartCount] = useState(3);
+  const [cartCount, setCartCount] = useState(3);
   const [searchQuery, setSearchQuery] = useState('');
+  const [sortBy, setSortBy] = useState('popular');
+  const [viewMode, setViewMode] = useState('grid');
 
-  const filteredProducts = MOCK_PRODUCTS.filter(p =>
+  let filteredProducts = MOCK_PRODUCTS.filter(p =>
     p.name.toLowerCase().includes(searchQuery.toLowerCase())
   );
+
+  if (sortBy === 'price_low_high') {
+    filteredProducts.sort((a, b) => {
+      const priceA = parseInt(a.price.replace(/[^0-9]/g, ''), 10);
+      const priceB = parseInt(b.price.replace(/[^0-9]/g, ''), 10);
+      return priceA - priceB;
+    });
+  } else if (sortBy === 'newest') {
+    filteredProducts.sort((a, b) => b.id - a.id);
+  }
+
+  const handleAddToCart = () => {
+    setCartCount(prev => prev + 1);
+  };
 
   return (
     <div style={styles.container}>
@@ -35,6 +51,7 @@ export default function ProductsPage() {
           </svg>
           <input
             type="text"
+            aria-label="Search in this shop"
             placeholder="Search in this shop..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
@@ -73,14 +90,19 @@ export default function ProductsPage() {
       </nav>
 
       {/* Filters */}
-      <ProductFilters />
+      <ProductFilters 
+        sortBy={sortBy} 
+        onSortChange={setSortBy} 
+        viewMode={viewMode} 
+        onViewModeChange={setViewMode} 
+      />
 
       {/* Products Grid */}
       <main style={styles.gridContainer}>
         {filteredProducts.length > 0 ? (
-          <div style={styles.grid}>
+          <div style={viewMode === 'list' ? { ...styles.grid, gridTemplateColumns: '1fr' } : styles.grid}>
             {filteredProducts.map((product) => (
-              <ProductCard key={product.id} product={product} />
+              <ProductCard key={product.id} product={product} onAddToCart={handleAddToCart} />
             ))}
           </div>
         ) : (

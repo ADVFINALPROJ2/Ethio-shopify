@@ -7,7 +7,13 @@ import './App.css';
 function App() {
   const startParam = window.Telegram?.WebApp?.initDataUnsafe?.start_param || '';
   const [storefrontSlug] = useState(() => {
-    return startParam.startsWith('shop_') ? startParam.replace('shop_', '') : null;
+    if (startParam.startsWith('shop_')) {
+      const slug = startParam.replace('shop_', '');
+      if (/^[a-zA-Z0-9_-]+$/.test(slug)) {
+        return slug;
+      }
+    }
+    return null;
   });
 
   const { isAuthenticated, isLoading, error } = useAuth();

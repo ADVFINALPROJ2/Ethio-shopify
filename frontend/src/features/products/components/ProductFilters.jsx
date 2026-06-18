@@ -1,35 +1,55 @@
 import React from 'react';
 
-export default function ProductFilters() {
+export default function ProductFilters({ 
+  sortBy, 
+  onSortChange, 
+  viewMode, 
+  onViewModeChange 
+}) {
   return (
     <div style={styles.container}>
       {/* Filter Button */}
-      <button style={styles.filterBtn}>
+      <button type="button" aria-label="Filter products" style={styles.filterBtn}>
         <span role="img" aria-label="filter">🎛️</span>
         <span>Filter</span>
       </button>
 
       {/* Sort Selector */}
       <div style={styles.selectWrapper}>
-        <select style={styles.select}>
-          <option>Sort by: Popular</option>
-          <option>Sort by: Price Low-High</option>
-          <option>Sort by: Newest</option>
+        <select 
+          aria-label="Sort products by" 
+          style={styles.select}
+          value={sortBy}
+          onChange={(e) => onSortChange && onSortChange(e.target.value)}
+        >
+          <option value="popular">Sort by: Popular</option>
+          <option value="price_low_high">Sort by: Price Low-High</option>
+          <option value="newest">Sort by: Newest</option>
         </select>
         <span style={styles.selectArrow}>▼</span>
       </div>
 
       {/* Grid / List Toggle */}
       <div style={styles.toggleGroup}>
-        <button style={styles.toggleActive}>
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" strokeWidth="1">
+        <button 
+          type="button" 
+          aria-label="Grid view" 
+          style={viewMode === 'grid' ? styles.toggleActive : styles.toggleInactive}
+          onClick={() => onViewModeChange && onViewModeChange('grid')}
+        >
+          <svg width="14" height="14" viewBox="0 0 24 24" fill={viewMode === 'grid' ? "currentColor" : "none"} stroke="currentColor" strokeWidth={viewMode === 'grid' ? "1" : "2"}>
             <rect x="3" y="3" width="8" height="8" rx="1" />
             <rect x="13" y="3" width="8" height="8" rx="1" />
             <rect x="3" y="13" width="8" height="8" rx="1" />
             <rect x="13" y="13" width="8" height="8" rx="1" />
           </svg>
         </button>
-        <button style={styles.toggleInactive}>
+        <button 
+          type="button" 
+          aria-label="List view" 
+          style={viewMode === 'list' ? styles.toggleActive : styles.toggleInactive}
+          onClick={() => onViewModeChange && onViewModeChange('list')}
+        >
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
             <line x1="3" y1="6" x2="21" y2="6" />
             <line x1="3" y1="12" x2="21" y2="12" />

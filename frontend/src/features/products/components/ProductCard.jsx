@@ -1,6 +1,6 @@
 import React from 'react';
 
-export default function ProductCard({ product }) {
+export default function ProductCard({ product, onAddToCart }) {
   return (
     <div style={styles.card}>
       {/* Product Image */}
@@ -23,7 +23,7 @@ export default function ProductCard({ product }) {
         <h3 style={styles.name}>{product.name}</h3>
         <div style={styles.footer}>
           <span style={styles.price}>{product.price}</span>
-          <button style={styles.cartBtn}>
+          <button type="button" aria-label="Add to cart" style={styles.cartBtn} onClick={() => onAddToCart && onAddToCart(product)}>
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z" />
               <line x1="3" y1="6" x2="21" y2="6" />
