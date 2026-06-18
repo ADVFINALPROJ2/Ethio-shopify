@@ -1,7 +1,7 @@
 class Product < ApplicationRecord
   belongs_to :user
   belongs_to :shop, optional: true
-  belongs_to :category, optional: true
+  belongs_to :product_category
 
   has_many :order_items, dependent: :destroy
   has_many :cart_items, dependent: :destroy
@@ -12,6 +12,7 @@ class Product < ApplicationRecord
   validates :price, presence: true, numericality: { greater_than_or_equal_to: 0 }
   validates :quantity, numericality: { greater_than_or_equal_to: 0 }, if: -> { quantity.present? }
   validates :status, inclusion: { in: %w[active inactive archived] }
+  validate :product_category_matches_shop
 
   after_update :check_low_stock, if: :saved_change_to_quantity?
 
@@ -37,5 +38,17 @@ class Product < ApplicationRecord
       return if quantity > low_stock_threshold
 
     LowStockAlertJob.perform_later(id)
+
+    def product_category_matches_shop
+      return unless shop && product_category
+  
+      unless product_category.category_id == shop.category_id
+        errors.add(
+          :product_category,
+          "must belong to the shop category"
+        )
+      end
+    end
+
     end
 end

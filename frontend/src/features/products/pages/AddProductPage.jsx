@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { ProductFormField } from '../components/ProductFormField';
 import { createProduct } from '../api/createProduct';
+import { getProductCategories } from '../api/getProductCategories';
 
 export const AddProductPage = ({ onCancel, onSaveSuccess }) => {
   const [productData, setProductData] = useState({
@@ -8,22 +9,37 @@ export const AddProductPage = ({ onCancel, onSaveSuccess }) => {
     description: '',
     price: '',
     stock: '',
-    image: null
+    image: null,
+    productCategoryId: ''
   });
 
   const [nameCount, setNameCount] = useState(0);
   const [descCount, setDescCount] = useState(0);
   const [isSaving, setIsSaving] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
+  const [productCategories, setProductCategories] = useState([]);
+
+  useEffect(() => {
+    const loadCategories = async () => {
+      try {
+        const categories = await getProductCategories();
+        setProductCategories(categories);
+      } catch (error) {
+        console.error('Failed to load product categories:', error);
+      }
+    };
+
+    loadCategories();
+  }, []);
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
-    
+
     if (name === 'name') {
       if (value.length > 100) return;
       setNameCount(value.length);
     }
-    
+
     if (name === 'description') {
       if (value.length > 1000) return;
       setDescCount(value.length);
@@ -51,6 +67,7 @@ export const AddProductPage = ({ onCancel, onSaveSuccess }) => {
     formData.append('product[description]', productData.description);
     formData.append('product[price]', productData.price);
     formData.append('product[quantity]', productData.stock);
+    formData.append('product[product_category_id]', productData.productCategoryId);
 
     if (productData.image) {
       formData.append('product[images][]', productData.image);
@@ -105,11 +122,11 @@ export const AddProductPage = ({ onCancel, onSaveSuccess }) => {
 
       {/* FORM INPUT FIELDS */}
       <form onSubmit={handleSubmit} style={styles.form}>
-        
+
         {/* PRODUCT NAME */}
         <ProductFormField label="Product Name" subLabel="Choose a clear and descriptive name.">
           <div style={styles.inputWithCounterContainer}>
-            <input 
+            <input
               type="text"
               name="name"
               value={productData.name}
@@ -125,7 +142,7 @@ export const AddProductPage = ({ onCancel, onSaveSuccess }) => {
         {/* DESCRIPTION */}
         <ProductFormField label="Description" subLabel="Describe your product, its features, materials, and benefits.">
           <div style={styles.textareaContainer}>
-            <textarea 
+            <textarea
               name="description"
               value={productData.description}
               onChange={handleInputChange}
@@ -140,7 +157,7 @@ export const AddProductPage = ({ onCancel, onSaveSuccess }) => {
 
         {/* PRICE */}
         <ProductFormField label="Price" trailingText="(ETB)" subLabel="Set the selling price of your product.">
-          <input 
+          <input
             type="number"
             name="price"
             value={productData.price}
@@ -155,7 +172,7 @@ export const AddProductPage = ({ onCancel, onSaveSuccess }) => {
 
         {/* STOCK QUANTITY */}
         <ProductFormField label="Stock Quantity" subLabel="How many items do you have in stock?">
-          <input 
+          <input
             type="number"
             name="stock"
             value={productData.stock}
@@ -167,14 +184,38 @@ export const AddProductPage = ({ onCancel, onSaveSuccess }) => {
           />
         </ProductFormField>
 
+        <ProductFormField
+          label="Category"
+          subLabel="Choose the category that best matches your product."
+        >
+          <select
+            name="productCategoryId"
+            value={productData.productCategoryId}
+            onChange={handleInputChange}
+            style={styles.inputField}
+            required
+          >
+            <option value="">Select Category</option>
+
+            {productCategories.map((category) => (
+              <option
+                key={category.id}
+                value={category.id}
+              >
+                {category.name}
+              </option>
+            ))}
+          </select>
+        </ProductFormField>
+
         {/* IMAGE UPLOAD TARGET BOX */}
         <ProductFormField label="Product Image" subLabel="Upload a clear image of your product.">
           <div style={styles.uploadBox}>
             <div style={styles.uploadIconCircle}>
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#00a84e" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
-                <circle cx="8.5" cy="8.5" r="1.5"/>
-                <polyline points="21 15 16 10 5 21"/>
+                <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
+                <circle cx="8.5" cy="8.5" r="1.5" />
+                <polyline points="21 15 16 10 5 21" />
               </svg>
               <div style={styles.miniPlusBadge}>＋</div>
             </div>
@@ -184,8 +225,8 @@ export const AddProductPage = ({ onCancel, onSaveSuccess }) => {
             </div>
             <label style={styles.chooseImageLabel}>
               Choose Image
-              <input 
-                type="file" 
+              <input
+                type="file"
                 accept=".jpg,.jpeg,.png,.webp"
                 onChange={handleFileChange}
                 style={{ display: 'none' }}

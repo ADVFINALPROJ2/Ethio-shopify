@@ -1,6 +1,6 @@
 class Shop < ApplicationRecord
   belongs_to :owner, class_name: "User"
-  belongs_to :category, optional: true
+  belongs_to :category
   has_many :products, dependent: :nullify
   has_one_attached :logo
 

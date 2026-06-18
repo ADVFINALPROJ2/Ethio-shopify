@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_06_15_000000) do
+ActiveRecord::Schema[8.1].define(version: 2026_06_18_151122) do
   create_schema "extensions"
 
   # These are extensions that must be enabled in order to support this database
@@ -108,19 +108,27 @@ ActiveRecord::Schema[8.1].define(version: 2026_06_15_000000) do
     t.index ["order_id"], name: "index_payments_on_order_id"
   end
 
+  create_table "public.product_categories", force: :cascade do |t|
+    t.bigint "category_id", null: false
+    t.datetime "created_at", null: false
+    t.string "name"
+    t.datetime "updated_at", null: false
+    t.index ["category_id"], name: "index_product_categories_on_category_id"
+  end
+
   create_table "public.products", force: :cascade do |t|
-    t.bigint "category_id"
     t.datetime "created_at", null: false
     t.text "description"
     t.integer "low_stock_threshold", default: 5
     t.string "name", null: false
     t.decimal "price", precision: 10, scale: 2, null: false
+    t.bigint "product_category_id"
     t.integer "quantity", default: 0
     t.bigint "shop_id"
     t.string "status", default: "active"
     t.datetime "updated_at", null: false
     t.bigint "user_id", null: false
-    t.index ["category_id"], name: "index_products_on_category_id"
+    t.index ["product_category_id"], name: "index_products_on_product_category_id"
     t.index ["shop_id"], name: "index_products_on_shop_id"
     t.index ["user_id"], name: "index_products_on_user_id"
   end
@@ -169,7 +177,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_06_15_000000) do
   add_foreign_key "public.orders", "public.users"
   add_foreign_key "public.orders", "public.users", column: "seller_id"
   add_foreign_key "public.payments", "public.orders"
-  add_foreign_key "public.products", "public.categories"
+  add_foreign_key "public.product_categories", "public.categories"
+  add_foreign_key "public.products", "public.product_categories"
   add_foreign_key "public.products", "public.shops"
   add_foreign_key "public.products", "public.users"
   add_foreign_key "public.shops", "public.categories"
