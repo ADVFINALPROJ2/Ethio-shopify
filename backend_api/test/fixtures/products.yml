@@ -3,6 +3,7 @@ one:
   description: Traditional Ethiopian handwoven scarf made from high-quality cotton
   price: 29.99
   user: one
+  shop: one
   quantity: 10
   status: active
   low_stock_threshold: 5
@@ -12,6 +13,7 @@ two:
   description: Traditional Ethiopian coffee ceremony set with jebena and cups
   price: 89.99
   user: two
+  shop: two
   quantity: 5
   status: active
   low_stock_threshold: 5

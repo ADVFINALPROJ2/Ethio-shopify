@@ -1,6 +1,11 @@
 class CartsController < ApplicationController
   def show
-    user = User.find(params[:user_id])
+    user = User.find_by(id: params[:user_id])
+    unless user
+      render json: { errors: ["User not found"] }, status: :not_found
+      return
+    end
+
     cart = user.cart || user.create_cart!
 
     render json: {

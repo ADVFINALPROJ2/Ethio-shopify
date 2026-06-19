@@ -11,6 +11,7 @@ class Product < ApplicationRecord
   validates :name, presence: true
   validates :price, presence: true, numericality: { greater_than_or_equal_to: 0 }
   validates :quantity, numericality: { greater_than_or_equal_to: 0 }, if: -> { quantity.present? }
+  validates :low_stock_threshold, numericality: { only_integer: true, greater_than_or_equal_to: 0 }, allow_nil: true
   validates :status, inclusion: { in: %w[active inactive archived] }
 
   after_update :check_low_stock, if: :saved_change_to_quantity?
@@ -34,8 +35,11 @@ class Product < ApplicationRecord
     def check_low_stock
       return unless low_stock_threshold.present?
       return unless quantity.present?
-      return if quantity > low_stock_threshold
 
-    LowStockAlertJob.perform_later(id)
+      prev_qty, curr_qty = saved_change_to_quantity
+      return if prev_qty.nil? || prev_qty <= low_stock_threshold
+      return if curr_qty > low_stock_threshold
+
+      LowStockAlertJob.perform_later(id)
     end
 end

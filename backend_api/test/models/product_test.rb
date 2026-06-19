@@ -46,7 +46,7 @@ class ProductTest < ActiveSupport::TestCase
     assert_equal 5, product.low_stock_threshold
   end
 
-  test "low_stock_alert_job should be enqueued when stock below threshold" do
+  test "low_stock_alert_job should be enqueued when stock crosses below threshold" do
     product = products(:two)
     assert_enqueued_with(job: LowStockAlertJob, args: [ product.id ]) do
       product.update!(quantity: 2)
@@ -58,5 +58,25 @@ class ProductTest < ActiveSupport::TestCase
     assert_no_enqueued_jobs(only: LowStockAlertJob) do
       product.update!(quantity: 8)
     end
+  end
+
+  test "low_stock_alert_job should not be re-enqueued when already below threshold" do
+    product = products(:two)
+    product.update!(quantity: 2)
+
+    assert_no_enqueued_jobs(only: LowStockAlertJob) do
+      product.update!(quantity: 1)
+    end
+  end
+
+  test "should reject negative low_stock_threshold" do
+    @product.low_stock_threshold = -1
+    assert_not @product.valid?
+    assert_includes @product.errors[:low_stock_threshold], "must be greater than or equal to 0"
+  end
+
+  test "should accept nil low_stock_threshold" do
+    @product.low_stock_threshold = nil
+    assert @product.valid?
   end
 end

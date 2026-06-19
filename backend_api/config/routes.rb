@@ -15,4 +15,6 @@ Rails.application.routes.draw do
 
   get "cart" => "carts#show"
   resources :cart_items, only: [ :create, :update, :destroy ], path: "cart/items"
+
+  post "checkout" => "checkouts#create"
 end

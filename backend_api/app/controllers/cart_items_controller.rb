@@ -13,14 +13,15 @@ class CartItemsController < ApplicationController
     end
 
     product = Product.find(params[:product_id])
+    cart_item = @cart.cart_items.find_or_initialize_by(product_id: params[:product_id])
+    new_total = (cart_item.quantity || 0) + params[:quantity].to_i
 
-    if product.quantity < params[:quantity].to_i
-      render json: { errors: ["Insufficient stock: only #{product.quantity} available"] }, status: :unprocessable_entity
+    if product.quantity < new_total
+      render json: { errors: ["Insufficient stock: only #{product.quantity} available, you have #{cart_item.quantity || 0} in cart"] }, status: :unprocessable_entity
       return
     end
 
-    cart_item = @cart.cart_items.find_or_initialize_by(product_id: params[:product_id])
-    cart_item.quantity = (cart_item.quantity || 0) + params[:quantity].to_i
+    cart_item.quantity = new_total
 
     if cart_item.save
       render json: cart_response, status: :created
@@ -32,7 +33,17 @@ class CartItemsController < ApplicationController
   def update
     cart_item = @cart.cart_items.find(params[:id])
 
-    if cart_item.update(quantity: params[:quantity])
+    unless params[:quantity].present? && params[:quantity].to_i > 0
+      render json: { errors: ["quantity must be greater than 0"] }, status: :unprocessable_entity
+      return
+    end
+
+    if cart_item.product.quantity < params[:quantity].to_i
+      render json: { errors: ["Insufficient stock: only #{cart_item.product.quantity} available"] }, status: :unprocessable_entity
+      return
+    end
+
+    if cart_item.update(quantity: params[:quantity].to_i)
       render json: cart_response, status: :ok
     else
       render json: { errors: cart_item.errors.full_messages }, status: :unprocessable_entity
@@ -48,7 +59,11 @@ class CartItemsController < ApplicationController
   private
 
   def set_cart
-    user = User.find(params[:user_id])
+    user = User.find_by(id: params[:user_id])
+    unless user
+      render json: { errors: ["User not found"] }, status: :not_found
+      return
+    end
     @cart = user.cart || user.create_cart!
   end
 
