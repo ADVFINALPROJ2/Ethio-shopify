@@ -40,7 +40,7 @@ const categories = [
   { id: 6, name: 'Others' }
 ];
 
-export const ShopSetupPage = ({ onBack, onComplete, error }) => {
+export const ShopSetupPage = ({ onBack, onComplete, error, isLoading }) => {
   const [step, setStep] = useState(1);
   const [formData, setFormData] = useState({
     shopName: '',
@@ -369,8 +369,12 @@ export const ShopSetupPage = ({ onBack, onComplete, error }) => {
 
       {error && <p style={styles.errorBanner}>{error}</p>}
 
-      <button onClick={handleNext} style={styles.nextButton}>
-        {step < STEPS.length ? 'Continue' : 'Create Shop'}
+      <button 
+        onClick={handleNext} 
+        style={{ ...styles.nextButton, opacity: isLoading ? 0.7 : 1 }} 
+        disabled={isLoading}
+      >
+        {step < STEPS.length ? 'Continue' : (isLoading ? 'Creating Shop...' : 'Create Shop')}
       </button>
     </div>
   );

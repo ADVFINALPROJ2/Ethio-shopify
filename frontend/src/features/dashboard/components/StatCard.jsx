@@ -24,8 +24,8 @@ const styles = {
     padding: '10px 12px',
     display: 'flex',
     flexDirection: 'column',
-    flex: 1,
-    minWidth: 0,
+    flex: '0 0 120px',
+    minWidth: '120px',
     gap: '6px',
   },
   topRow: {

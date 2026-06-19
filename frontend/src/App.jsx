@@ -2,6 +2,8 @@ import { useState } from 'react';
 import ProductsPage from './features/products/pages/ProductsPage';
 import { DashboardPage } from './features/dashboard/pages/DashboardPage';
 import { ShopSetupPage } from './features/shop-creation/pages/ShopSetupPage';
+import { SellerLandingPage } from './features/shop-creation/pages/SellerLandingPage';
+import { createShop } from './features/shop-creation/api/createShop';
 import { useAuth } from './features/auth/context/useAuth';
 import './App.css';
 
@@ -17,7 +19,46 @@ function App() {
     return null;
   });
 
-  const { isAuthenticated, isLoading, error, user } = useAuth();
+  const { isAuthenticated, isLoading, error, user, refreshUser } = useAuth();
+  const [isCreatingShop, setIsCreatingShop] = useState(false);
+  const [isSubmittingShop, setIsSubmittingShop] = useState(false);
+  const [shopCreationError, setShopCreationError] = useState('');
+
+  const handleShopCreated = async (formData) => {
+    setIsSubmittingShop(true);
+    setShopCreationError('');
+
+    const submitData = new FormData();
+    submitData.append('shop[name]', formData.shopName);
+    submitData.append('shop[category_id]', formData.categoryId);
+    submitData.append('shop[email]', formData.email);
+    submitData.append('shop[phone_code]', formData.phoneCode);
+    submitData.append('shop[phone_number]', formData.phoneNumber);
+    submitData.append('shop[country]', formData.country);
+    submitData.append('shop[region]', formData.region);
+    submitData.append('shop[city]', formData.city);
+    submitData.append('shop[address]', formData.address);
+    submitData.append('shop[description]', formData.description);
+
+    if (formData.logo) {
+      submitData.append('shop[logo]', formData.logo);
+    }
+
+    try {
+      await createShop(submitData);
+      if (window.Telegram?.WebApp) {
+        window.Telegram.WebApp.HapticFeedback.notificationOccurred('success');
+      }
+      await refreshUser();
+    } catch (err) {
+      setShopCreationError(err.response?.data?.errors?.join(', ') || err.response?.data?.error || 'Unable to create shop.');
+      if (window.Telegram?.WebApp) {
+        window.Telegram.WebApp.HapticFeedback.notificationOccurred('error');
+      }
+    } finally {
+      setIsSubmittingShop(false);
+    }
+  };
 
   if (isLoading) {
     return (
@@ -51,7 +92,18 @@ function App() {
     return <ProductsPage slug={storefrontSlug} />;
   }
 
-  return <ShopSetupPage />;
+  if (isCreatingShop) {
+    return (
+      <ShopSetupPage
+        onBack={() => setIsCreatingShop(false)}
+        onComplete={handleShopCreated}
+        error={shopCreationError}
+        isLoading={isSubmittingShop}
+      />
+    );
+  }
+
+  return <SellerLandingPage onCreateShopTrigger={() => setIsCreatingShop(true)} />;
 }
 
 export default App;

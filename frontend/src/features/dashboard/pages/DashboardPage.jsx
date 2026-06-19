@@ -417,8 +417,17 @@ const styles = {
     display: 'flex',
     flexDirection: 'column',
     gap: '2px',
+    minWidth: 0,
   },
-  shopName: { margin: 0, fontSize: '15px', fontWeight: '700', color: '#0e1e25', inlineSize: 'max-content' },
+  shopName: {
+    margin: 0,
+    fontSize: '15px',
+    fontWeight: '700',
+    color: '#0e1e25',
+    whiteSpace: 'nowrap',
+    overflow: 'hidden',
+    textOverflow: 'ellipsis',
+  },
   badge: {
     fontSize: '10px',
     fontWeight: '600',
@@ -525,7 +534,9 @@ const styles = {
     overflow: 'hidden',
     textOverflow: 'ellipsis',
     marginRight: '8px',
-    fontWeight: '500'
+    fontWeight: '500',
+    flex: 1,
+    minWidth: 0,
   },
   copyBtn: {
     background: 'none',
@@ -556,6 +567,9 @@ const styles = {
     gap: '8px',
     marginBottom: '24px',
     overflowX: 'auto',
+    width: '100%',
+    boxSizing: 'border-box',
+    WebkitOverflowScrolling: 'touch',
   },
   productsSection: { marginBottom: '20px' },
   sectionHeadingRow: {
