@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import ProductFilters from '../components/ProductFilters';
 import ProductCard from '../components/ProductCard';
 import apiClient from '../../../lib/axios';
@@ -11,6 +11,21 @@ export default function ProductsPage({ slug }) {
   const [searchQuery, setSearchQuery] = useState('');
   const [sortBy, setSortBy] = useState('popular');
   const [viewMode, setViewMode] = useState('grid');
+  const [selectedCategory, setSelectedCategory] = useState('');
+  const [minPrice, setMinPrice] = useState('');
+  const [maxPrice, setMaxPrice] = useState('');
+  const [isFilterPanelOpen, setIsFilterPanelOpen] = useState(false);
+
+  const categories = useMemo(() => {
+    if (!shop || !shop.products) return [];
+    const cats = new Map();
+    shop.products.forEach(p => {
+      if (p.product_category) {
+        cats.set(p.product_category.id, p.product_category);
+      }
+    });
+    return Array.from(cats.values());
+  }, [shop]);
 
   useEffect(() => {
     const fetchShop = async () => {
@@ -45,9 +60,13 @@ export default function ProductsPage({ slug }) {
     );
   }
 
-  let filteredProducts = (shop.products || []).filter(p =>
-    p.name.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  let filteredProducts = (shop.products || []).filter(p => {
+    const matchesSearch = p.name.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesCategory = selectedCategory ? p.product_category?.id === selectedCategory : true;
+    const matchesMinPrice = minPrice ? Number(p.price) >= Number(minPrice) : true;
+    const matchesMaxPrice = maxPrice ? Number(p.price) <= Number(maxPrice) : true;
+    return matchesSearch && matchesCategory && matchesMinPrice && matchesMaxPrice;
+  });
 
   if (sortBy === 'price_low_high') {
     filteredProducts.sort((a, b) => Number(a.price) - Number(b.price));
@@ -123,6 +142,15 @@ export default function ProductsPage({ slug }) {
         onSortChange={setSortBy} 
         viewMode={viewMode} 
         onViewModeChange={setViewMode} 
+        categories={categories}
+        selectedCategory={selectedCategory}
+        onCategoryChange={setSelectedCategory}
+        minPrice={minPrice}
+        onMinPriceChange={setMinPrice}
+        maxPrice={maxPrice}
+        onMaxPriceChange={setMaxPrice}
+        isFilterPanelOpen={isFilterPanelOpen}
+        onToggleFilterPanel={() => setIsFilterPanelOpen(!isFilterPanelOpen)}
       />
 
       {/* Products Grid */}

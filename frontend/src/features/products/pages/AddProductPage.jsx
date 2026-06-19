@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { ProductFormField } from '../components/ProductFormField';
 import { createProduct } from '../api/createProduct';
 import { getProductCategories } from '../api/getProductCategories';
@@ -18,6 +18,20 @@ export const AddProductPage = ({ onCancel, onSaveSuccess }) => {
   const [isSaving, setIsSaving] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
   const [productCategories, setProductCategories] = useState([]);
+  const [isCategoryDropdownOpen, setIsCategoryDropdownOpen] = useState(false);
+  const dropdownRef = useRef(null);
+
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+        setIsCategoryDropdownOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, []);
 
   useEffect(() => {
     const loadCategories = async () => {
@@ -188,24 +202,46 @@ export const AddProductPage = ({ onCancel, onSaveSuccess }) => {
           label="Category"
           subLabel="Choose the category that best matches your product."
         >
-          <select
-            name="productCategoryId"
-            value={productData.productCategoryId}
-            onChange={handleInputChange}
-            style={styles.inputField}
-            required
-          >
-            <option value="">Select Category</option>
-
-            {productCategories.map((category) => (
-              <option
-                key={category.id}
-                value={category.id}
-              >
-                {category.name}
-              </option>
-            ))}
-          </select>
+          <div style={{ position: 'relative' }} ref={dropdownRef}>
+            <div 
+              style={{
+                ...styles.inputField, 
+                display: 'flex', 
+                justifyContent: 'space-between', 
+                alignItems: 'center',
+                cursor: 'pointer'
+              }}
+              onClick={() => setIsCategoryDropdownOpen(!isCategoryDropdownOpen)}
+            >
+              <span>
+                {productData.productCategoryId 
+                  ? productCategories.find(c => c.id == productData.productCategoryId)?.name 
+                  : 'Select Category'}
+              </span>
+              <span style={{ color: '#94a3b8', fontSize: '10px' }}>▼</span>
+            </div>
+            
+            {isCategoryDropdownOpen && (
+              <div style={styles.dropdownMenu}>
+                {productCategories.map((category) => (
+                  <div
+                    key={category.id}
+                    style={{
+                      ...styles.dropdownItem,
+                      backgroundColor: productData.productCategoryId == category.id ? '#f0fdf4' : '#fff',
+                      color: productData.productCategoryId == category.id ? '#00a84e' : '#0e1e25',
+                    }}
+                    onClick={() => {
+                      handleInputChange({ target: { name: 'productCategoryId', value: category.id } });
+                      setIsCategoryDropdownOpen(false);
+                    }}
+                  >
+                    {category.name}
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
         </ProductFormField>
 
         {/* IMAGE UPLOAD TARGET BOX */}
@@ -485,5 +521,25 @@ const styles = {
     alignItems: 'center',
     fontSize: '11px',
     fontWeight: '500',
+  },
+  dropdownMenu: {
+    position: 'absolute',
+    top: '100%',
+    left: 0,
+    right: 0,
+    backgroundColor: '#fff',
+    border: '1px solid #e2e8f0',
+    borderRadius: '8px',
+    marginTop: '4px',
+    maxHeight: '200px',
+    overflowY: 'auto',
+    zIndex: 100,
+    boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
+  },
+  dropdownItem: {
+    padding: '12px',
+    fontSize: '14px',
+    cursor: 'pointer',
+    borderBottom: '1px solid #f0f4f8',
   }
 };

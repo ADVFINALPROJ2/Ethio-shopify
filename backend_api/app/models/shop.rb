@@ -25,7 +25,8 @@ class Shop < ApplicationRecord
       include: {
         products: {
           except: [ :created_at, :updated_at ],
-          methods: [ :image_urls ]
+          methods: [ :image_urls ],
+          include: { product_category: { only: [:id, :name] } }
         }
       }
     ).merge(

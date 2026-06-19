@@ -4,12 +4,32 @@ export default function ProductFilters({
   sortBy, 
   onSortChange, 
   viewMode, 
-  onViewModeChange 
+  onViewModeChange,
+  categories = [],
+  selectedCategory,
+  onCategoryChange,
+  minPrice,
+  onMinPriceChange,
+  maxPrice,
+  onMaxPriceChange,
+  isFilterPanelOpen,
+  onToggleFilterPanel
 }) {
   return (
+    <>
     <div style={styles.container}>
       {/* Filter Button */}
-      <button type="button" aria-label="Filter products" style={styles.filterBtn}>
+      <button 
+        type="button" 
+        aria-label="Filter products" 
+        style={{
+          ...styles.filterBtn, 
+          backgroundColor: isFilterPanelOpen ? '#f0fdf4' : '#fff',
+          borderColor: isFilterPanelOpen ? '#00a84e' : '#e2e8f0',
+          color: isFilterPanelOpen ? '#00a84e' : '#4a555a'
+        }}
+        onClick={onToggleFilterPanel}
+      >
         <span role="img" aria-label="filter">🎛️</span>
         <span>Filter</span>
       </button>
@@ -58,6 +78,55 @@ export default function ProductFilters({
         </button>
       </div>
     </div>
+    
+    {isFilterPanelOpen && (
+      <div style={styles.filterPanel}>
+        <div style={styles.filterSection}>
+          <label style={styles.filterLabel}>Category</label>
+          <div style={styles.categoryChips}>
+            <button
+              style={!selectedCategory ? styles.chipActive : styles.chipInactive}
+              onClick={() => onCategoryChange && onCategoryChange('')}
+            >
+              All
+            </button>
+            {categories.map((cat) => (
+              <button
+                key={cat.id}
+                style={selectedCategory === cat.id ? styles.chipActive : styles.chipInactive}
+                onClick={() => onCategoryChange && onCategoryChange(cat.id)}
+              >
+                {cat.name}
+              </button>
+            ))}
+          </div>
+        </div>
+        
+        <div style={styles.filterSection}>
+          <label style={styles.filterLabel}>Price Range (ETB)</label>
+          <div style={styles.priceInputs}>
+            <input 
+              type="number" 
+              placeholder="Min" 
+              value={minPrice} 
+              onChange={(e) => onMinPriceChange && onMinPriceChange(e.target.value)}
+              style={styles.priceInput}
+              min="0"
+            />
+            <span style={styles.priceSeparator}>-</span>
+            <input 
+              type="number" 
+              placeholder="Max" 
+              value={maxPrice} 
+              onChange={(e) => onMaxPriceChange && onMaxPriceChange(e.target.value)}
+              style={styles.priceInput}
+              min="0"
+            />
+          </div>
+        </div>
+      </div>
+    )}
+    </>
   );
 }
 
@@ -140,4 +209,64 @@ const styles = {
     display: 'flex',
     alignItems: 'center',
   },
+  filterPanel: {
+    padding: '16px',
+    backgroundColor: '#fff',
+    borderBottom: '1px solid #e2e8f0',
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '16px',
+  },
+  filterSection: {
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '8px',
+  },
+  filterLabel: {
+    fontSize: '13px',
+    fontWeight: '700',
+    color: '#0e1e25',
+  },
+  categoryChips: {
+    display: 'flex',
+    flexWrap: 'wrap',
+    gap: '8px',
+  },
+  chipActive: {
+    padding: '6px 12px',
+    backgroundColor: '#00a84e',
+    color: '#fff',
+    border: 'none',
+    borderRadius: '16px',
+    fontSize: '12px',
+    fontWeight: '600',
+    cursor: 'pointer',
+  },
+  chipInactive: {
+    padding: '6px 12px',
+    backgroundColor: '#f1f5f9',
+    color: '#4a555a',
+    border: 'none',
+    borderRadius: '16px',
+    fontSize: '12px',
+    fontWeight: '500',
+    cursor: 'pointer',
+  },
+  priceInputs: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '8px',
+  },
+  priceInput: {
+    flex: 1,
+    padding: '8px 12px',
+    borderRadius: '8px',
+    border: '1px solid #e2e8f0',
+    fontSize: '13px',
+    outline: 'none',
+  },
+  priceSeparator: {
+    color: '#94a3b8',
+    fontWeight: '600',
+  }
 };

@@ -1,5 +1,7 @@
 import { useState } from 'react';
 import ProductsPage from './features/products/pages/ProductsPage';
+import { DashboardPage } from './features/dashboard/pages/DashboardPage';
+import { ShopSetupPage } from './features/shop-creation/pages/ShopSetupPage';
 import { useAuth } from './features/auth/context/useAuth';
 import './App.css';
 
@@ -15,7 +17,7 @@ function App() {
     return null;
   });
 
-  const { isAuthenticated, isLoading, error } = useAuth();
+  const { isAuthenticated, isLoading, error, user } = useAuth();
 
   if (isLoading) {
     return (
@@ -41,7 +43,15 @@ function App() {
     );
   }
 
-  return <ProductsPage slug={storefrontSlug} />;
+  if (user?.has_shop) {
+    return <DashboardPage />;
+  }
+
+  if (storefrontSlug) {
+    return <ProductsPage slug={storefrontSlug} />;
+  }
+
+  return <ShopSetupPage />;
 }
 
 export default App;

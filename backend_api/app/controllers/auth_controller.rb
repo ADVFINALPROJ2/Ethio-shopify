@@ -76,7 +76,7 @@ class AuthController < ApplicationController
 
     render json: {
       token: token,
-      user: user.as_json(except: [:created_at, :updated_at])
+      user: user_json(user)
     }, status: :ok
   rescue => e
     render json: { error: "Authentication failed: #{e.message}" }, status: :unprocessable_entity
@@ -107,7 +107,7 @@ class AuthController < ApplicationController
 
   def user_json(user)
     user.as_json(except: [:created_at, :updated_at])
-        .merge("avatar_url" => avatar_url(user))
+        .merge("avatar_url" => avatar_url(user), "has_shop" => user.shop.present?)
   end
 
   def avatar_url(user)
