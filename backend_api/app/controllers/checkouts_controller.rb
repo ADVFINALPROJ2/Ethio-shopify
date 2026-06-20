@@ -17,11 +17,18 @@ class CheckoutsController < ApplicationController
 
     order = nil
     ActiveRecord::Base.transaction do
-      order = @user.orders.create!(status: :pending_payment)
+      phone = params[:phone].presence || @user.phone_number
+      order = @user.orders.create!(
+        status: :pending_payment,
+        phone: phone,
+        address: params[:address],
+        notes: params[:notes]
+      )
 
       @cart.cart_items.each do |item|
         order.order_items.create!(
           product: item.product,
+          product_name: item.product.name,
           quantity: item.quantity,
           price: item.product.price
         )
@@ -36,6 +43,8 @@ class CheckoutsController < ApplicationController
 
       @cart.cart_items.destroy_all
     end
+
+    NewOrderNotificationJob.perform_later(order.id)
 
     render json: order_json(order), status: :created
   end
@@ -64,10 +73,13 @@ class CheckoutsController < ApplicationController
       id: order.id,
       status: order.status,
       total: order.order_items.sum { |oi| oi.price * oi.quantity },
+      phone: order.phone,
+      address: order.address,
+      notes: order.notes,
       items: order.order_items.map { |oi|
         {
           product_id: oi.product_id,
-          product_name: oi.product.name,
+          product_name: oi.product_name,
           quantity: oi.quantity,
           price: oi.price.to_f
         }
