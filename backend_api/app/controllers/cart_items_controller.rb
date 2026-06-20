@@ -1,4 +1,5 @@
 class CartItemsController < ApplicationController
+  before_action :authenticate_user!
   before_action :set_cart
 
   def create
@@ -59,12 +60,11 @@ class CartItemsController < ApplicationController
   private
 
   def set_cart
-    user = User.find_by(id: params[:user_id])
-    unless user
-      render json: { errors: ["User not found"] }, status: :not_found
+    unless current_user.id == params[:user_id].to_i
+      render json: { errors: ["Unauthorized"] }, status: :forbidden
       return
     end
-    @cart = user.cart || user.create_cart!
+    @cart = current_user.cart || current_user.create_cart!
   end
 
   def cart_response
