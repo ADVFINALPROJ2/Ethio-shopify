@@ -181,6 +181,11 @@
     padding: 16px;
   }
 
+  .user-selector {
+    margin-left: 0;
+    margin-top: 12px;
+  }
+
   .app-nav {
     display: grid;
     grid-template-columns: 1fr 1fr;

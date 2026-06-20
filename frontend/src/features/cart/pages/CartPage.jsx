@@ -6,20 +6,32 @@ import { removeCartItem } from '../api/removeCartItem';
 export const CartPage = ({ userId, onCartUpdated }) => {
     const [cart, setCart] = useState(null);
     const [loading, setLoading] = useState(true);
+    const [loadError, setLoadError] = useState('');
 
     useEffect(() => {
+        let cancelled = false;
         if (!userId) {
             setLoading(false);
             setCart(null);
+            setLoadError('');
             return;
         }
         setLoading(true);
+        setLoadError('');
         getCart(userId)
             .then((data) => {
+                if (cancelled) return;
                 setCart(data);
             })
-            .catch(console.error)
-            .finally(() => setLoading(false));
+            .catch((error) => {
+                if (cancelled) return;
+                setCart(null);
+                setLoadError(error.response?.data?.errors?.[0] || 'Failed to load cart.');
+            })
+            .finally(() => {
+                if (!cancelled) setLoading(false);
+            });
+        return () => { cancelled = true; };
     }, [userId]);
 
     const handleQuantityChange = async (itemId, newQty) => {
@@ -59,6 +71,15 @@ export const CartPage = ({ userId, onCartUpdated }) => {
     }
 
     if (loading) return <p style={{ textAlign: 'center', marginTop: '40px' }}>Loading cart...</p>;
+
+    if (loadError) {
+        return (
+            <div style={{ maxWidth: '600px', margin: '40px auto', fontFamily: 'sans-serif', textAlign: 'center' }}>
+                <h2>Your Cart</h2>
+                <p>{loadError}</p>
+            </div>
+        );
+    }
 
     if (!cart || !cart.cart || cart.cart.cart_items.length === 0) {
         return (

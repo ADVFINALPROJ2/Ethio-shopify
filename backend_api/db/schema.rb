@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_06_13_023900) do
+ActiveRecord::Schema[8.1].define(version: 2026_06_20_120000) do
   create_schema "extensions"
 
   # These are extensions that must be enabled in order to support this database
@@ -66,6 +66,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_06_13_023900) do
   end
 
   create_table "public.categories", force: :cascade do |t|
+    t.string "name"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
   end
@@ -98,15 +99,19 @@ ActiveRecord::Schema[8.1].define(version: 2026_06_13_023900) do
   end
 
   create_table "public.products", force: :cascade do |t|
+    t.bigint "category_id"
     t.datetime "created_at", null: false
     t.text "description"
     t.integer "low_stock_threshold", default: 5
     t.string "name", null: false
     t.decimal "price", precision: 10, scale: 2, null: false
     t.integer "quantity", default: 0
+    t.bigint "shop_id", null: false
     t.string "status", default: "active"
     t.datetime "updated_at", null: false
     t.bigint "user_id", null: false
+    t.index ["category_id"], name: "index_products_on_category_id"
+    t.index ["shop_id"], name: "index_products_on_shop_id"
     t.index ["user_id"], name: "index_products_on_user_id"
   end
 
@@ -138,6 +143,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_06_13_023900) do
   add_foreign_key "public.order_items", "public.products"
   add_foreign_key "public.orders", "public.users"
   add_foreign_key "public.payments", "public.orders"
+  add_foreign_key "public.products", "public.categories"
+  add_foreign_key "public.products", "public.shops"
   add_foreign_key "public.products", "public.users"
   add_foreign_key "public.shops", "public.users"
 

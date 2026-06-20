@@ -12,7 +12,7 @@ class ProductsController < ApplicationController
   end
 
   def create
-    @product = current_user.products.new(product_params)
+    @product = current_user.shop.products.new(product_params)
 
     if @product.save
       attach_images if params[:product][:images].present?

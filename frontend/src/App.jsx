@@ -37,9 +37,11 @@ function App() {
   }, []);
 
   useEffect(() => {
-    if (selectedUserId) {
-      refreshCartCount(selectedUserId);
+    if (selectedUserId == null) {
+      setCartCount(0);
+      return;
     }
+    refreshCartCount(selectedUserId);
   }, [selectedUserId, refreshCartCount]);
 
   const handleAddToCart = async (productId) => {
@@ -111,7 +113,10 @@ function App() {
         </nav>
         <select
           value={selectedUserId || ''}
-          onChange={(e) => setSelectedUserId(Number(e.target.value))}
+          onChange={(e) => {
+            const val = e.target.value;
+            setSelectedUserId(val === '' ? null : Number(val));
+          }}
           className="user-selector"
         >
           <option value="">Select user</option>
