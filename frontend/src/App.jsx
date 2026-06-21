@@ -1,25 +1,67 @@
-import { useState, useEffect, useCallback } from 'react';
-import { UsersPage } from './features/users/pages/UsersPage';
-import { ProductsPage } from './features/products/pages/ProductsPage';
-import { CartPage } from './features/cart/pages/CartPage';
+import { useState } from 'react';
+import ProductsPage from './features/products/pages/ProductsPage';
+import { DashboardPage } from './features/dashboard/pages/DashboardPage';
+import { ShopSetupPage } from './features/shop-creation/pages/ShopSetupPage';
+import { SellerLandingPage } from './features/shop-creation/pages/SellerLandingPage';
+import { createShop } from './features/shop-creation/api/createShop';
 import { useAuth } from './features/auth/context/useAuth';
 import { getUsers } from './features/users/api/getUsers';
 import { getCart } from './features/cart/api/getCart';
 import { addToCart } from './features/cart/api/addToCart';
 import './App.css';
 
-const NAV_ITEMS = [
-  { key: 'users', label: 'Users' },
-  { key: 'products', label: 'Products' },
-  { key: 'cart', label: 'Cart' }
-];
-
 function App() {
-  const [activeTab, setActiveTab] = useState('users');
-  const [users, setUsers] = useState([]);
-  const [selectedUserId, setSelectedUserId] = useState(null);
-  const [cartCount, setCartCount] = useState(0);
-  const { user, isAuthenticated, isLoading, error } = useAuth();
+  const startParam = window.Telegram?.WebApp?.initDataUnsafe?.start_param || '';
+  const [storefrontSlug] = useState(() => {
+    if (startParam.startsWith('shop_')) {
+      const slug = startParam.replace('shop_', '');
+      if (/^[a-zA-Z0-9_-]+$/.test(slug)) {
+        return slug;
+      }
+    }
+    return null;
+  });
+
+  const { isAuthenticated, isLoading, error, user, refreshUser } = useAuth();
+  const [isCreatingShop, setIsCreatingShop] = useState(false);
+  const [isSubmittingShop, setIsSubmittingShop] = useState(false);
+  const [shopCreationError, setShopCreationError] = useState('');
+
+  const handleShopCreated = async (formData) => {
+    setIsSubmittingShop(true);
+    setShopCreationError('');
+
+    const submitData = new FormData();
+    submitData.append('shop[name]', formData.shopName);
+    submitData.append('shop[category_id]', formData.categoryId);
+    submitData.append('shop[email]', formData.email);
+    submitData.append('shop[phone_code]', formData.phoneCode);
+    submitData.append('shop[phone_number]', formData.phoneNumber);
+    submitData.append('shop[country]', formData.country);
+    submitData.append('shop[region]', formData.region);
+    submitData.append('shop[city]', formData.city);
+    submitData.append('shop[address]', formData.address);
+    submitData.append('shop[description]', formData.description);
+
+    if (formData.logo) {
+      submitData.append('shop[logo]', formData.logo);
+    }
+
+    try {
+      await createShop(submitData);
+      if (window.Telegram?.WebApp) {
+        window.Telegram.WebApp.HapticFeedback.notificationOccurred('success');
+      }
+      await refreshUser();
+    } catch (err) {
+      setShopCreationError(err.response?.data?.errors?.join(', ') || err.response?.data?.error || 'Unable to create shop.');
+      if (window.Telegram?.WebApp) {
+        window.Telegram.WebApp.HapticFeedback.notificationOccurred('error');
+      }
+    } finally {
+      setIsSubmittingShop(false);
+    }
+  };
 
   useEffect(() => {
     getUsers().then(setUsers).catch(console.error);
@@ -83,62 +125,26 @@ function App() {
     );
   }
 
-  return (
-    <div className="app-shell">
-      <header className="app-header">
-        <div className="app-title">
-          <span className="app-mark">ES</span>
-          <div>
-            <h1>Ethio-Shopify</h1>
-            <p>Signed in as {user.fullname || user.first_name || user.username || 'Telegram user'}</p>
-          </div>
-        </div>
-        <nav className="app-nav" aria-label="Primary navigation">
-          {NAV_ITEMS.map((item) => (
-            <button
-              key={item.key}
-              type="button"
-              className={activeTab === item.key ? 'is-active' : ''}
-              onClick={() => setActiveTab(item.key)}
-              style={{ position: 'relative' }}
-            >
-              {item.label}
-              {item.key === 'cart' && cartCount > 0 && (
-                <span className="cart-badge">
-                  {cartCount}
-                </span>
-              )}
-            </button>
-          ))}
-        </nav>
-        <select
-          value={selectedUserId || ''}
-          onChange={(e) => {
-            const val = e.target.value;
-            setSelectedUserId(val === '' ? null : Number(val));
-          }}
-          className="user-selector"
-        >
-          <option value="">Select user</option>
-          {users.map((user) => (
-            <option key={user.id} value={user.id}>
-              {user.fullname || user.username}
-            </option>
-          ))}
-        </select>
-      </header>
+  if (user?.has_shop) {
+    return <DashboardPage />;
+  }
 
-      <main className="app-content">
-        {activeTab === 'users' && <UsersPage />}
-        {activeTab === 'products' && (
-          <ProductsPage onAddToCart={handleAddToCart} />
-        )}
-        {activeTab === 'cart' && (
-          <CartPage userId={selectedUserId} onCartUpdated={() => refreshCartCount(selectedUserId)} />
-        )}
-      </main>
-    </div>
-  );
+  if (storefrontSlug) {
+    return <ProductsPage slug={storefrontSlug} />;
+  }
+
+  if (isCreatingShop) {
+    return (
+      <ShopSetupPage
+        onBack={() => setIsCreatingShop(false)}
+        onComplete={handleShopCreated}
+        error={shopCreationError}
+        isLoading={isSubmittingShop}
+      />
+    );
+  }
+
+  return <SellerLandingPage onCreateShopTrigger={() => setIsCreatingShop(true)} />;
 }
 
 export default App;
