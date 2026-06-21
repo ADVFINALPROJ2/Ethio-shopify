@@ -5,6 +5,7 @@ import { ShopSetupPage } from './features/shop-creation/pages/ShopSetupPage';
 import { SellerLandingPage } from './features/shop-creation/pages/SellerLandingPage';
 import { createShop } from './features/shop-creation/api/createShop';
 import { useAuth } from './features/auth/context/useAuth';
+import CartPage from './features/cart/pages/CartPage';
 import './App.css';
 
 function App() {
@@ -23,6 +24,7 @@ function App() {
   const [isCreatingShop, setIsCreatingShop] = useState(false);
   const [isSubmittingShop, setIsSubmittingShop] = useState(false);
   const [shopCreationError, setShopCreationError] = useState('');
+  const [showCart, setShowCart] = useState(false);
 
   const handleShopCreated = async (formData) => {
     setIsSubmittingShop(true);
@@ -89,7 +91,10 @@ function App() {
   }
 
   if (storefrontSlug) {
-    return <ProductsPage slug={storefrontSlug} />;
+    if (showCart) {
+      return <CartPage userId={user?.id} onBack={() => setShowCart(false)} />;
+    }
+    return <ProductsPage slug={storefrontSlug} userId={user?.id} onGoToCart={() => setShowCart(true)} />;
   }
 
   if (isCreatingShop) {

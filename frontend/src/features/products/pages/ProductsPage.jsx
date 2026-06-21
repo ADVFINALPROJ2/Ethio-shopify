@@ -1,9 +1,11 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import ProductFilters from '../components/ProductFilters';
 import ProductCard from '../components/ProductCard';
 import apiClient from '../../../lib/axios';
+import addToCart from '../../cart/api/addToCart';
+import getCart from '../../cart/api/getCart';
 
-export default function ProductsPage({ slug }) {
+export default function ProductsPage({ slug, onGoToCart, userId }) {
   const [shop, setShop] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -27,6 +29,18 @@ export default function ProductsPage({ slug }) {
     return Array.from(cats.values());
   }, [shop]);
 
+  const fetchCartCount = useCallback(async () => {
+    if (!userId) return;
+    try {
+      const data = await getCart(userId);
+      const items = data?.cart?.cart_items || [];
+      const totalItems = items.reduce((sum, item) => sum + item.quantity, 0);
+      setCartCount(totalItems);
+    } catch (err) {
+      console.log('could not fetch cart');
+    }
+  }, [userId]);
+
   useEffect(() => {
     const fetchShop = async () => {
       try {
@@ -40,7 +54,8 @@ export default function ProductsPage({ slug }) {
       }
     };
     fetchShop();
-  }, [slug]);
+    fetchCartCount();
+  }, [slug, fetchCartCount]);
 
   if (loading) {
     return (
@@ -74,8 +89,20 @@ export default function ProductsPage({ slug }) {
     filteredProducts.sort((a, b) => b.id - a.id);
   }
 
-  const handleAddToCart = () => {
-    setCartCount(prev => prev + 1);
+  const handleAddToCart = async (product) => {
+    if (!userId) return;
+    try {
+      const data = await addToCart(userId, product.id);
+      const items = data?.cart?.cart_items || [];
+      const totalItems = items.reduce((sum, item) => sum + item.quantity, 0);
+      setCartCount(totalItems);
+      if (window.Telegram?.WebApp?.HapticFeedback) {
+        window.Telegram.WebApp.HapticFeedback.impactOccurred('light');
+      }
+    } catch (err) {
+      const msg = err.response?.data?.errors?.[0] || 'could not add to cart';
+      alert(msg);
+    }
   };
 
   return (
@@ -99,7 +126,7 @@ export default function ProductsPage({ slug }) {
             style={styles.searchInput}
           />
         </div>
-        <div style={styles.cartIconWrapper}>
+        <div style={styles.cartIconWrapper} onClick={() => onGoToCart && onGoToCart()}>
           <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#0e1e25" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
             <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z" />
             <line x1="3" y1="6" x2="21" y2="6" />
@@ -184,7 +211,7 @@ export default function ProductsPage({ slug }) {
             </p>
           </div>
         </div>
-        <button style={styles.floatingCartBtn}>
+        <button style={styles.floatingCartBtn} onClick={() => onGoToCart && onGoToCart()}>
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
             <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z" />
             <line x1="3" y1="6" x2="21" y2="6" />
