@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import getCart from '../api/getCart';
 import updateCartItem from '../api/updateCartItem';
 import removeCartItem from '../api/removeCartItem';
@@ -12,19 +12,32 @@ const CartPage = ({ userId, onBack }) => {
   const [form, setForm] = useState({ phone: '', address: '', notes: '' });
   const [orderResult, setOrderResult] = useState(null);
   const [submitting, setSubmitting] = useState(false);
+  const [isUpdating, setIsUpdating] = useState(false);
+
+  const userIdRef = useRef(userId);
+  useEffect(() => {
+    userIdRef.current = userId;
+  }, [userId]);
 
   const fetchCart = async () => {
     if (!userId) return;
+    const capturedUserId = userId;
     setLoading(true);
     setError('');
     try {
-      const data = await getCart(userId);
-      setCartData(data);
+      const data = await getCart(capturedUserId);
+      if (userIdRef.current === capturedUserId) {
+        setCartData(data);
+      }
     } catch (err) {
       console.log('error fetching cart', err);
-      setError('Could not load your cart right now.');
+      if (userIdRef.current === capturedUserId) {
+        setError('Could not load your cart right now.');
+      }
     } finally {
-      setLoading(false);
+      if (userIdRef.current === capturedUserId) {
+        setLoading(false);
+      }
     }
   };
 
@@ -33,12 +46,15 @@ const CartPage = ({ userId, onBack }) => {
   }, [userId]);
 
   const handleQtyChange = async (itemId, newQty) => {
-    if (newQty < 1) return;
+    if (newQty < 1 || isUpdating) return;
+    setIsUpdating(true);
     try {
       const data = await updateCartItem(userId, itemId, newQty);
       setCartData(data);
     } catch (err) {
       alert(err.response?.data?.errors?.[0] || 'cant update quantity');
+    } finally {
+      setIsUpdating(false);
     }
   };
 
@@ -61,7 +77,7 @@ const CartPage = ({ userId, onBack }) => {
     setSubmitting(true);
     try {
       const data = await checkoutCart(userId, form);
-      setOrderResult(data.order);
+      setOrderResult({ ...data.order, ...form });
       setStep('done');
       setCartData(null);
     } catch (err) {
@@ -322,15 +338,18 @@ const CartPage = ({ userId, onBack }) => {
                 <div style={styles.qtyControl}>
                   <button
                     onClick={() => handleQtyChange(item.id, item.quantity - 1)}
+                    disabled={isUpdating}
                     style={styles.qtyBtn}
                   >-</button>
                   <span style={styles.qtyValue}>{item.quantity}</span>
                   <button
                     onClick={() => handleQtyChange(item.id, item.quantity + 1)}
+                    disabled={isUpdating}
                     style={{ ...styles.qtyBtn, backgroundColor: '#00a84e', color: '#fff' }}
                   >+</button>
                   <button
                     onClick={() => handleRemove(item.id)}
+                    aria-label="Remove item"
                     style={styles.removeBtn}
                   >
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#dc3545" strokeWidth="2">
@@ -359,6 +378,128 @@ const CartPage = ({ userId, onBack }) => {
       )}
     </div>
   );
+};
+
+const styles = {
+  container: {
+    maxWidth: '600px',
+    margin: '0 auto',
+    backgroundColor: '#f8fafc',
+    minHeight: '100vh',
+    fontFamily: 'system-ui, -apple-system, sans-serif'
+  },
+  header: {
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    padding: '16px',
+    backgroundColor: '#fff',
+    borderBottom: '1px solid #e2e8f0'
+  },
+  backBtn: {
+    background: 'none',
+    border: 'none',
+    color: '#64748b',
+    fontSize: '14px',
+    cursor: 'pointer',
+    padding: '8px'
+  },
+  itemList: {
+    padding: '16px'
+  },
+  itemCard: {
+    display: 'flex',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    backgroundColor: '#fff',
+    padding: '16px',
+    borderRadius: '12px',
+    marginBottom: '12px',
+    boxShadow: '0 1px 2px rgba(0,0,0,0.05)'
+  },
+  itemInfo: {
+    flex: 1
+  },
+  itemName: {
+    margin: '0 0 4px 0',
+    fontSize: '15px',
+    fontWeight: '500',
+    color: '#0f172a'
+  },
+  itemPrice: {
+    margin: 0,
+    fontSize: '14px',
+    color: '#64748b'
+  },
+  qtyControl: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '12px'
+  },
+  qtyBtn: {
+    width: '28px',
+    height: '28px',
+    borderRadius: '6px',
+    border: '1px solid #e2e8f0',
+    backgroundColor: '#f8fafc',
+    color: '#475569',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    cursor: 'pointer',
+    fontSize: '16px',
+    padding: 0
+  },
+  qtyValue: {
+    fontSize: '15px',
+    fontWeight: '500',
+    minWidth: '20px',
+    textAlign: 'center'
+  },
+  removeBtn: {
+    background: 'none',
+    border: 'none',
+    padding: '4px',
+    cursor: 'pointer',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginLeft: '8px'
+  },
+  footer: {
+    position: 'sticky',
+    bottom: 0,
+    backgroundColor: '#fff',
+    padding: '20px',
+    borderTop: '1px solid #e2e8f0',
+    boxShadow: '0 -4px 6px -1px rgba(0,0,0,0.05)'
+  },
+  totalRow: {
+    display: 'flex',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: '16px'
+  },
+  totalLabel: {
+    fontSize: '16px',
+    color: '#64748b'
+  },
+  totalValue: {
+    fontSize: '20px',
+    fontWeight: '600',
+    color: '#0f172a'
+  },
+  checkoutBtn: {
+    width: '100%',
+    padding: '16px',
+    backgroundColor: '#00a84e',
+    color: '#fff',
+    border: 'none',
+    borderRadius: '12px',
+    fontSize: '16px',
+    fontWeight: '600',
+    cursor: 'pointer'
+  }
 };
 
 export default CartPage;

@@ -1,4 +1,5 @@
 class CartItemsController < ApplicationController
+  before_action :authenticate_user!
   before_action :set_cart
 
   def create
@@ -32,6 +33,12 @@ class CartItemsController < ApplicationController
   def update
     cart_item = @cart.cart_items.find(params[:id])
 
+    if cart_item.product.quantity < params[:quantity].to_i
+      render json: { errors: ["Insufficient stock"] },
+             status: :unprocessable_entity
+      return
+    end
+
     if cart_item.update(quantity: params[:quantity])
       render json: cart_response, status: :ok
     else
@@ -48,8 +55,11 @@ class CartItemsController < ApplicationController
   private
 
   def set_cart
-    user = User.find(params[:user_id])
-    @cart = user.cart || user.create_cart!
+    if current_user.id != params[:user_id].to_i
+      render json: { error: "Forbidden" }, status: :forbidden
+      return
+    end
+    @cart = current_user.cart || current_user.create_cart!
   end
 
   def cart_response

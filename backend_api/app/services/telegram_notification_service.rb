@@ -45,12 +45,12 @@ class TelegramNotificationService
   def self.notify_new_order(order)
     require "erb"
 
-    items = order.order_items.map { |i| "#{i.product_name} x#{i.quantity} - ETB #{i.price}" }.join("\n")
+    items = order.order_items.map { |i| "#{ERB::Util.html_escape(i.product_name)} x#{i.quantity} - ETB #{i.price}" }.join("\n")
 
     message = "<b>New Order Received!</b>\n\n" \
               "Order: #{order.order_number}\n" \
               "Customer: #{ERB::Util.html_escape(order.customer_name || 'Unknown')}\n" \
-              "Phone: #{order.phone_number || 'N/A'}\n" \
+              "Phone: #{order.phone_number.present? ? ERB::Util.html_escape(order.phone_number) : 'N/A'}\n" \
               "Total: ETB #{order.total}\n\n" \
               "Items:\n#{items}"
 
