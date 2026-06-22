@@ -7,6 +7,11 @@ Rails.application.routes.draw do
   get "me", to: "auth#me"
   patch "me", to: "auth#update"
 
+  # routes for development-only authentication (for testing purposes)
+  if Rails.env.development?
+    post "auth/dev_login", to: "auth#dev_login"
+  end
+
   get "dashboard/stats", to: "dashboard#stats"
   get "shops/me", to: "shops#me"
   patch "shops/me", to: "shops#update_me"

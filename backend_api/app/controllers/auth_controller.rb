@@ -1,5 +1,5 @@
 class AuthController < ApplicationController
-  skip_before_action :authenticate_user!, only: [:telegram], raise: false
+  skip_before_action :authenticate_user!, only: [:telegram, :dev_login], raise: false
   before_action :authenticate_user!, only: [:me, :update]
 
   # POST /auth/telegram
@@ -99,6 +99,26 @@ class AuthController < ApplicationController
     end
   end
 
+
+  # POST /auth/dev_login
+  if Rails.env.development?
+    def dev_login
+      user = User.first_or_create!(
+        telegram_id: "dev_user_001",
+        username: "devuser",
+        first_name: "Dev",
+        last_name: "User",
+        fullname: "Dev User"
+      )
+  
+      user.create_cart! unless user.cart.present?
+  
+      token = JsonWebToken.encode(user_id: user.id)
+  
+      render json: { token: token, user: user_json(user) }, status: :ok
+    end
+  end
+
   private
 
   def user_params
@@ -113,7 +133,7 @@ class AuthController < ApplicationController
   def avatar_url(user)
     return unless user.avatar.attached?
 
-    Rails.application.routes.url_helpers.rails_blob_url(user.avatar, only_path: true)
+    Rails.application.routes.url_helpers.rails_blob_url(user.avatar)
   end
 
   def valid_telegram_signature?(params, bot_token)

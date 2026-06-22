@@ -7,9 +7,10 @@ import { createShop } from './features/shop-creation/api/createShop';
 import { useAuth } from './features/auth/context/useAuth';
 import CartPage from './features/cart/pages/CartPage';
 import './App.css';
+import { getStartParam } from '../src/lib/getStartParam';
 
 function App() {
-  const startParam = window.Telegram?.WebApp?.initDataUnsafe?.start_param || '';
+  const startParam = window.Telegram?.WebApp?.initDataUnsafe?.start_param || getStartParam() || '';
   const [storefrontSlug] = useState(() => {
     if (startParam.startsWith('shop_')) {
       const slug = startParam.replace('shop_', '');

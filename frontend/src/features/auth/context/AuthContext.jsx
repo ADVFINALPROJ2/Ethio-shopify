@@ -6,6 +6,7 @@ import {
   setStoredAuthToken
 } from '../authStorage';
 import { AuthContext } from './authContext';
+import apiClient from '../../../lib/axios';
 
 const getTelegramWebApp = () => window.Telegram?.WebApp;
 
@@ -56,22 +57,23 @@ export const AuthProvider = ({ children }) => {
     const initializeAuth = async () => {
       setIsLoading(true);
       setError(null);
-      
+
       const isLocalhost =
         window.location.hostname === "localhost" ||
-        window.location.hostname === "127.0.0.1";
+        window.location.hostname === "127.0.0.1" ||
+        import.meta.env.VITE_DEV_MODE === 'true';
 
       if (isLocalhost) {
-        setUser({
-          id: 1,
-          username: "devuser",
-          fullname: "Development User",
-          first_name: "Dev",
-          last_name: "User"
-        });
-
-        setToken('thisIsaRandomtokenJustTofoolThefrontendwedontActuallyNeedrealTokenScinceAlazarisonlyworkingintheUIfornow');
-        setIsLoading(false);
+        try {
+          const response = await apiClient.post("/auth/dev_login");
+          setStoredAuthToken(response.data.token);
+          setToken(response.data.token);
+          setUser(response.data.user);
+        } catch (e) {
+          setError(e.message);
+        } finally {
+          if (isMounted) setIsLoading(false);  // ← this was missing
+        }
         return;
       }
 

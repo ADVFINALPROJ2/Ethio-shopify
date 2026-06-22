@@ -73,4 +73,8 @@ Rails.application.configure do
   
   # Allow requests from ngrok URL
   config.hosts << /.*\.ngrok-free\.dev/
+
+  Rails.application.routes.default_url_options = {
+    host: ENV.fetch("ngrok_url")
+  }
 end

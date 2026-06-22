@@ -17,7 +17,7 @@ class Product < ApplicationRecord
   after_update :check_low_stock, if: :saved_change_to_quantity?
 
   def image_urls
-    images.map { |img| Rails.application.routes.url_helpers.rails_blob_url(img, only_path: true) }
+    images.map { |img| Rails.application.routes.url_helpers.rails_storage_proxy_url(img) }
   end
 
   def decrement_stock!(quantity = 1)
