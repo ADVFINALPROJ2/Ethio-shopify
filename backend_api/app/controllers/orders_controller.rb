@@ -42,6 +42,8 @@ class OrdersController < ApplicationController
       id: item.id,
       quantity: item.quantity,
       price: item.price,
+      product_name: item.product_name,
+      product_price: item.product_price,
       product: {
         id: product.id,
         name: product.name,

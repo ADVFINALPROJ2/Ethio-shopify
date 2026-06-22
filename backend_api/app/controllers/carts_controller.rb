@@ -34,9 +34,11 @@ class CartsController < ApplicationController
     order = user.orders.create!(
       seller: seller,
       total: total,
-      status: "pending",
+      status: "pending_payment",
       customer_name: user.fullname,
-      phone_number: user.phone_number
+      phone_number: params[:phone].presence || user.phone_number,
+      address: params[:address],
+      notes: params[:notes]
     )
 
     cart_items.each do |item|
@@ -49,6 +51,8 @@ class CartsController < ApplicationController
     end
 
     cart.cart_items.destroy_all
+
+    NewOrderNotificationJob.perform_later(order.id)
 
     render json: {
       order: {
