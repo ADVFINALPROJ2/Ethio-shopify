@@ -37,7 +37,8 @@ class CartsController < ApplicationController
       status: "pending_payment",
       customer_name: user.fullname,
       phone_number: params[:phone].presence || user.phone_number,
-      address: params[:address]
+      address: params[:address],
+      notes: params[:notes]
     )
 
     cart_items.each do |item|
