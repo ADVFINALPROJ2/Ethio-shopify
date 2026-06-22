@@ -34,9 +34,10 @@ class CartsController < ApplicationController
     order = user.orders.create!(
       seller: seller,
       total: total,
-      status: "pending",
+      status: "pending_payment",
       customer_name: user.fullname,
-      phone_number: user.phone_number
+      phone_number: params[:phone].presence || user.phone_number,
+      address: params[:address]
     )
 
     cart_items.each do |item|
