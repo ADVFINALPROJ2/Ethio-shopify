@@ -51,6 +51,8 @@ class CartsController < ApplicationController
 
     cart.cart_items.destroy_all
 
+    NewOrderNotificationJob.perform_later(order.id)
+
     render json: {
       order: {
         id: order.id,
