@@ -67,10 +67,16 @@ class ProductsController < ApplicationController
     render json: items.map { |item| product_order_json(item) }, status: :ok
   end
 
+  def destroy_image
+    @product = current_user.products.find(params[:product_id])
+    @product.images.find(params[:id]).purge
+    head :no_content
+  end
+
   private
 
   def set_product
-    @product = current_user.products.find(params[:id])
+    @product = current_user.products.includes(images_attachments: :blob).find(params[:id])
   end
 
   def set_public_product
@@ -92,10 +98,15 @@ class ProductsController < ApplicationController
     product.as_json(include: { user: { only: [ :id, :username, :fullname ] } })
            .merge(
              "image_urls" => product.image_urls,
+             "images" => product.images.map { |img| { id: img.id, url: product_image_url(img) } },
              "product_category_name" => product.product_category&.name,
              "total_sold" => product.order_items.joins(:order).where(orders: { seller_id: current_user.id }).sum(:quantity),
              "total_revenue" => product.order_items.joins(:order).where(orders: { seller_id: current_user.id }).sum("order_items.quantity * order_items.price").to_s
            )
+  end
+
+  def product_image_url(image)
+    Rails.application.routes.url_helpers.rails_storage_proxy_url(image)
   end
 
   def products_json(products)

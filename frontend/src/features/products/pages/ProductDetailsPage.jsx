@@ -1,8 +1,10 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { OrderHistoryRow } from '../components/OrderHistoryRow';
 import { OrderDetailsPage } from '../../orders/pages/OrderDetailsPage';
 import { getProduct } from '../api/getProduct';
 import { getProductOrders } from '../api/getProductOrders';
+import { updateProduct } from '../api/updateProduct';
+import { deleteProductImage } from '../api/deleteProductImage';
 
 export const ProductDetailsPage = ({ productId, onBack }) => {
   const [view, setView] = useState('details');
@@ -12,6 +14,59 @@ export const ProductDetailsPage = ({ productId, onBack }) => {
   const [selectedOrderId, setSelectedOrderId] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
+  const [restockQty, setRestockQty] = useState(0);
+  const [isRestocking, setIsRestocking] = useState(false);
+  const [isUploading, setIsUploading] = useState(false);
+  const [deletingImgId, setDeletingImgId] = useState(null);
+  const fileInputRef = useRef(null);
+
+  const handleRestock = async () => {
+    if (!restockQty || restockQty <= 0) return;
+    setIsRestocking(true);
+    try {
+      const updated = await updateProduct(productId, { quantity: restockQty });
+      setProduct(updated);
+      setRestockQty(0);
+    } catch (err) {
+      alert(err.response?.data?.errors?.[0] || 'Failed to update stock');
+    } finally {
+      setIsRestocking(false);
+    }
+  };
+
+  const handleDeleteImage = async (imageId) => {
+    if (deletingImgId) return;
+    setDeletingImgId(imageId);
+    try {
+      await deleteProductImage(productId, imageId);
+      setProduct(prev => prev ? {
+        ...prev,
+        image_urls: prev.image_urls.filter((_, i) => prev.images?.[i]?.id !== imageId),
+        images: prev.images?.filter(img => img.id !== imageId)
+      } : prev);
+    } catch (err) {
+      alert('Failed to remove image');
+    } finally {
+      setDeletingImgId(null);
+    }
+  };
+
+  const handleUploadImages = async (e) => {
+    const files = e.target.files;
+    if (!files?.length) return;
+    setIsUploading(true);
+    try {
+      const formData = new FormData();
+      Array.from(files).forEach(file => formData.append('product[images][]', file));
+      const updated = await updateProduct(productId, formData);
+      setProduct(updated);
+    } catch (err) {
+      alert('Failed to upload images');
+    } finally {
+      setIsUploading(false);
+      if (fileInputRef.current) fileInputRef.current.value = '';
+    }
+  };
 
   const formatCurrency = (value) => `ETB ${Number(value || 0).toLocaleString()}`;
   const formatDate = (value) => value ? new Date(value).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' }) : '';
@@ -128,19 +183,69 @@ export const ProductDetailsPage = ({ productId, onBack }) => {
         </div>
       </section>
 
+      {/* RESTOCK SECTION */}
+      <section style={styles.sectionBlock}>
+        <h3 style={styles.sectionTitle}>Restock Product</h3>
+        <div style={styles.restockRow}>
+          <input
+            type="number"
+            min="1"
+            placeholder="Qty to add"
+            value={restockQty || ''}
+            onChange={(e) => setRestockQty(parseInt(e.target.value) || 0)}
+            style={styles.restockInput}
+          />
+          <button
+            onClick={handleRestock}
+            disabled={isRestocking || !restockQty || restockQty <= 0}
+            style={styles.restockBtn}
+          >
+            {isRestocking ? 'Updating...' : 'Restock'}
+          </button>
+        </div>
+      </section>
+
       {/* GALLERY MANAGEMENT SECTION */}
       <section style={styles.sectionBlock}>
         <h3 style={styles.sectionTitle}>Product Images</h3>
         <div style={styles.galleryRow}>
-          {(product?.image_urls || []).map((imageUrl, index) => (
-            <div key={imageUrl} style={{ ...styles.thumbPlaceholder, border: index === 0 ? '2px solid #00a84e' : '1px dashed #ccd4d8' }}>
-              <img src={imageUrl} alt={`${product?.name} ${index + 1}`} style={styles.thumbImage} />
+          {(product?.images || []).map((img) => (
+            <div key={img.id} style={styles.thumbWrapper}>
+              <img src={img.url} alt={`${product?.name}`} style={styles.thumbImage} />
+              <button
+                onClick={() => handleDeleteImage(img.id)}
+                disabled={deletingImgId === img.id}
+                style={styles.removeImgBtn}
+                title="Remove image"
+              >
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="3">
+                  <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
+                </svg>
+              </button>
             </div>
           ))}
-          <button style={styles.addImageSquare}>
-            <span style={{ fontSize: '18px', color: '#66767e' }}>＋</span>
-            <span style={styles.addImageText}>Add Image</span>
+          <button
+            style={styles.addImageSquare}
+            onClick={() => fileInputRef.current?.click()}
+            disabled={isUploading}
+          >
+            {isUploading ? (
+              <span style={{ fontSize: '14px', color: '#66767e' }}>Uploading...</span>
+            ) : (
+              <>
+                <span style={{ fontSize: '18px', color: '#66767e' }}>＋</span>
+                <span style={styles.addImageText}>Add Image</span>
+              </>
+            )}
           </button>
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="image/*"
+            multiple
+            onChange={handleUploadImages}
+            style={{ display: 'none' }}
+          />
         </div>
       </section>
 
@@ -491,5 +596,55 @@ const styles = {
     alignItems: 'center',
     fontSize: '11px',
     fontWeight: '500',
-  }
+  },
+  restockRow: {
+    display: 'flex',
+    gap: '8px',
+    alignItems: 'center',
+  },
+  restockInput: {
+    flex: 1,
+    padding: '10px 12px',
+    border: '1px solid #e2e8f0',
+    borderRadius: '8px',
+    fontSize: '14px',
+    outline: 'none',
+    color: '#0e1e25',
+    backgroundColor: '#fff',
+  },
+  restockBtn: {
+    padding: '10px 20px',
+    backgroundColor: '#00a84e',
+    color: '#fff',
+    border: 'none',
+    borderRadius: '8px',
+    fontSize: '14px',
+    fontWeight: '600',
+    cursor: 'pointer',
+    whiteSpace: 'nowrap',
+  },
+  thumbWrapper: {
+    position: 'relative',
+    width: '64px',
+    height: '64px',
+    borderRadius: '8px',
+    overflow: 'hidden',
+    border: '1px solid #e2e8f0',
+    flexShrink: 0,
+  },
+  removeImgBtn: {
+    position: 'absolute',
+    top: '-6px',
+    right: '-6px',
+    width: '20px',
+    height: '20px',
+    borderRadius: '50%',
+    backgroundColor: '#dc3545',
+    border: '2px solid #fff',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    cursor: 'pointer',
+    padding: 0,
+  },
 };

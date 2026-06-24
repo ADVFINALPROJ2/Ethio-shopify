@@ -29,6 +29,7 @@ Rails.application.routes.draw do
       get :orders
     end
   end
+  delete "products/:product_id/images/:id", to: "products#destroy_image", as: :product_image
 
   get "cart" => "carts#show"
   post "cart/checkout" => "carts#checkout"

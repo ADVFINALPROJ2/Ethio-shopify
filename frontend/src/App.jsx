@@ -98,7 +98,7 @@ function App() {
           <ProductsPage slug={storefrontSlug} userId={user?.id} onGoToCart={() => setShowCart(true)} />
         </div>
         <div style={{ display: showCart ? 'block' : 'none' }}>
-          <CartPage userId={user?.id} onBack={() => setShowCart(false)} />
+          <CartPage userId={user?.id} onBack={() => setShowCart(false)} visible={showCart} />
         </div>
       </>
     );

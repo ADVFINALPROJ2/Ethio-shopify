@@ -4,7 +4,7 @@ import updateCartItem from '../api/updateCartItem';
 import removeCartItem from '../api/removeCartItem';
 import checkoutCart from '../api/checkoutCart';
 
-const CartPage = ({ userId, onBack }) => {
+const CartPage = ({ userId, onBack, visible }) => {
   const [cartData, setCartData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -18,6 +18,14 @@ const CartPage = ({ userId, onBack }) => {
   useEffect(() => {
     userIdRef.current = userId;
   }, [userId]);
+
+  const visibleRef = useRef(visible);
+  useEffect(() => {
+    if (!visibleRef.current && visible) {
+      fetchCart();
+    }
+    visibleRef.current = visible;
+  }, [visible]);
 
   const fetchCart = async () => {
     if (!userId) return;
