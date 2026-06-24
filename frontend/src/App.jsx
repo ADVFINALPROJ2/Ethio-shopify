@@ -92,10 +92,16 @@ function App() {
   }
 
   if (storefrontSlug) {
-    if (showCart) {
-      return <CartPage userId={user?.id} onBack={() => setShowCart(false)} />;
-    }
-    return <ProductsPage slug={storefrontSlug} userId={user?.id} onGoToCart={() => setShowCart(true)} />;
+    return (
+      <>
+        <div style={{ display: showCart ? 'none' : 'block' }}>
+          <ProductsPage slug={storefrontSlug} userId={user?.id} onGoToCart={() => setShowCart(true)} />
+        </div>
+        <div style={{ display: showCart ? 'block' : 'none' }}>
+          <CartPage userId={user?.id} onBack={() => setShowCart(false)} />
+        </div>
+      </>
+    );
   }
 
   if (isCreatingShop) {

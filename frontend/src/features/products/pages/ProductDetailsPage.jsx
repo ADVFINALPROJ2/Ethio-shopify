@@ -98,7 +98,7 @@ export const ProductDetailsPage = ({ productId, onBack }) => {
             </button>
           </div>
           <span style={styles.activeBadge}>{product?.status || 'active'}</span>
-          <span style={styles.categorySubtext}>🏷️ {product?.category_name || 'Uncategorized'}</span>
+          <span style={styles.categorySubtext}>🏷️ {product?.product_category_name || product?.category_name || 'Uncategorized'}</span>
           <p style={styles.productDescription}>
             {product?.description || 'No description provided.'}
           </p>

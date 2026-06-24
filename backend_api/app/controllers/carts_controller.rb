@@ -5,19 +5,35 @@ class CartsController < ApplicationController
   def show
     cart = current_user.cart || current_user.create_cart!
 
+    cart_items = cart.cart_items.includes(product: { images_attachments: :blob })
+    subtotal = cart_items.sum { |item| item.quantity.to_i * item.product.price }
+
     render json: {
-      cart: cart.as_json(
-        include: {
-          cart_items: {
-            include: {
-              product: {
-                methods: :image_urls
-              }
+      cart: {
+        id: cart.id,
+        user_id: cart.user_id,
+        cart_items: cart_items.map { |item|
+          product = item.product
+          {
+            id: item.id,
+            cart_id: item.cart_id,
+            product_id: item.product_id,
+            quantity: item.quantity,
+            created_at: item.created_at,
+            updated_at: item.updated_at,
+            product: {
+              id: product.id,
+              name: product.name,
+              price: product.price,
+              description: product.description,
+              quantity: product.quantity,
+              status: product.status,
+              image_urls: product.image_urls
             }
           }
         }
-      ),
-      subtotal: cart.subtotal
+      },
+      subtotal: subtotal
     }, status: :ok
   end
 

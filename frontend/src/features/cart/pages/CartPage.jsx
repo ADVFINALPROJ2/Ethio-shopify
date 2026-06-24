@@ -48,10 +48,26 @@ const CartPage = ({ userId, onBack }) => {
   const handleQtyChange = async (itemId, newQty) => {
     if (newQty < 1 || isUpdating) return;
     setIsUpdating(true);
+
+    const prevCartData = cartData;
+    setCartData(prev => {
+      if (!prev) return prev;
+      return {
+        ...prev,
+        cart: {
+          ...prev.cart,
+          cart_items: prev.cart.cart_items.map(item =>
+            item.id === itemId ? { ...item, quantity: newQty } : item
+          )
+        }
+      };
+    });
+
     try {
       const data = await updateCartItem(userId, itemId, newQty);
       setCartData(data);
     } catch (err) {
+      setCartData(prevCartData);
       alert(err.response?.data?.errors?.[0] || 'cant update quantity');
     } finally {
       setIsUpdating(false);
@@ -60,10 +76,24 @@ const CartPage = ({ userId, onBack }) => {
 
   const handleRemove = async (itemId) => {
     if (!window.confirm('Remove this item from cart?')) return;
+
+    const prevCartData = cartData;
+    setCartData(prev => {
+      if (!prev) return prev;
+      return {
+        ...prev,
+        cart: {
+          ...prev.cart,
+          cart_items: prev.cart.cart_items.filter(item => item.id !== itemId)
+        }
+      };
+    });
+
     try {
       const data = await removeCartItem(userId, itemId);
       setCartData(data);
     } catch (err) {
+      setCartData(prevCartData);
       alert('failed to remove item');
     }
   };

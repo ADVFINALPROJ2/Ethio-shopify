@@ -1,5 +1,6 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { AddressDetailRow } from '../components/AddressDetailRow';
+import { getOrder } from '../api/getOrder';
 
 // SVG Icons Inline for Address Block Identification
 const UserIcon = () => <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>;
@@ -10,7 +11,77 @@ const BuildingIcon = () => <svg width="15" height="15" viewBox="0 0 24 24" fill=
 const MapIcon = () => <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polygon points="3 6 9 3 15 6 21 3 21 18 15 21 9 18 3 21"></polygon><line x1="9" y1="3" x2="9" y2="18"></line><line x1="15" y1="6" x2="15" y2="21"></line></svg>;
 const HomeIcon = () => <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg>;
 
-export const OrderDetailsPage = ({ onBack }) => {
+export const OrderDetailsPage = ({ orderId, onBack }) => {
+  const [order, setOrder] = useState(null);
+  const [isLoading, setIsLoading] = useState(false);
+  const [errorMessage, setErrorMessage] = useState('');
+
+  useEffect(() => {
+    if (!orderId) return;
+    const loadOrder = async () => {
+      setIsLoading(true);
+      setErrorMessage('');
+      try {
+        const data = await getOrder(orderId);
+        setOrder(data);
+      } catch (error) {
+        setErrorMessage(error.response?.data?.error || 'Unable to load order details.');
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    loadOrder();
+  }, [orderId]);
+
+  const formatCurrency = (value) => `ETB ${Number(value || 0).toLocaleString()}`;
+  const formatDate = (value) => value ? new Date(value).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' }) : '';
+  const formatTime = (value) => value ? new Date(value).toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' }) : '';
+
+  if (isLoading) {
+    return (
+      <div style={styles.container}>
+        <header style={styles.header}>
+          <button onClick={onBack} style={styles.backButton}>
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <line x1="19" y1="12" x2="5" y2="12"></line>
+              <polyline points="12 19 5 12 12 5"></polyline>
+            </svg>
+          </button>
+          <div style={styles.logoContainer}>
+            <span style={styles.logoIcon}>🛍️</span>
+            <span style={styles.logoText}>EthioShopify</span>
+          </div>
+        </header>
+        <div style={{ textAlign: 'center', padding: '60px 20px', color: '#66767e', fontSize: '14px' }}>Loading order details...</div>
+      </div>
+    );
+  }
+
+  if (errorMessage) {
+    return (
+      <div style={styles.container}>
+        <header style={styles.header}>
+          <button onClick={onBack} style={styles.backButton}>
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <line x1="19" y1="12" x2="5" y2="12"></line>
+              <polyline points="12 19 5 12 12 5"></polyline>
+            </svg>
+          </button>
+          <div style={styles.logoContainer}>
+            <span style={styles.logoIcon}>🛍️</span>
+            <span style={styles.logoText}>EthioShopify</span>
+          </div>
+        </header>
+        <div style={{ textAlign: 'center', padding: '40px', color: '#b91c1c' }}>{errorMessage}</div>
+      </div>
+    );
+  }
+
+  if (!order) return null;
+
+  const totalItems = order.order_items?.reduce((sum, item) => sum + item.quantity, 0) || 0;
+  const firstItem = order.order_items?.[0];
+
   return (
     <div style={styles.container}>
       {/* GLOBAL HEADER BAR */}
@@ -42,10 +113,10 @@ export const OrderDetailsPage = ({ onBack }) => {
           </svg>
         </div>
         <div style={styles.identityMeta}>
-          <h1 style={styles.orderTitle}>Order #ORD-10248</h1>
+          <h1 style={styles.orderTitle}>{order.order_number}</h1>
           <div style={styles.statusBadgeRow}>
-            <span style={styles.pendingBadge}>Pending</span>
-            <span style={styles.dateStampText}>May 20, 2024 • 2:30 PM</span>
+            <span style={styles.pendingBadge}>{order.status}</span>
+            <span style={styles.dateStampText}>{formatDate(order.created_at)} • {formatTime(order.created_at)}</span>
           </div>
         </div>
       </section>
@@ -55,17 +126,26 @@ export const OrderDetailsPage = ({ onBack }) => {
         <h3 style={styles.cardSectionTitle}>Product Detail</h3>
         <div style={styles.productContent}>
           <div style={styles.imagePlaceholder}>
-            <span style={{ fontSize: '36px' }}>👗</span>
-            <span style={styles.imagePlaceholderText}>[ Product Image ]</span>
+            {firstItem?.product?.image_urls?.[0] ? (
+              <img src={firstItem.product.image_urls[0]} alt={firstItem.product_name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+            ) : (
+              <>
+                <span style={{ fontSize: '36px' }}>🛍️</span>
+                <span style={styles.imagePlaceholderText}>[ Product Image ]</span>
+              </>
+            )}
           </div>
           <div style={styles.productMeta}>
-            <h4 style={styles.productName}>Elegant Green Dress</h4>
-            <span style={styles.skuText}>SKU: EGD-001</span>
-            <span style={styles.categoryPath}>Category: Fashion & Apparel • Dress</span>
-            <span style={styles.priceTag}>ETB 1,850</span>
-            <span style={styles.quantityCount}>Quantity: 1</span>
+            <h4 style={styles.productName}>{firstItem?.product_name || firstItem?.product?.name || 'Product'}</h4>
+            <span style={styles.priceTag}>{formatCurrency(firstItem?.price)}</span>
+            <span style={styles.quantityCount}>Quantity: {firstItem?.quantity || 0}</span>
           </div>
         </div>
+        {order.order_items?.length > 1 && (
+          <div style={{ marginTop: '12px', padding: '8px 12px', backgroundColor: '#f8fafc', borderRadius: '8px', fontSize: '13px', color: '#66767e' }}>
+            +{order.order_items.length - 1} more item(s) in this order
+          </div>
+        )}
       </section>
 
       {/* PRICE METRICS RATIO CARD */}
@@ -74,11 +154,11 @@ export const OrderDetailsPage = ({ onBack }) => {
         <div style={styles.summarySplitRow}>
           <div style={styles.summaryCell}>
             <span style={styles.summaryLabel}>Total Items</span>
-            <span style={styles.summaryValue}>1</span>
+            <span style={styles.summaryValue}>{totalItems}</span>
           </div>
           <div style={styles.summaryCell}>
             <span style={styles.summaryLabel}>Total Price</span>
-            <span style={{ ...styles.summaryValue, color: '#00a84e' }}>ETB 1,910</span>
+            <span style={{ ...styles.summaryValue, color: '#00a84e' }}>{formatCurrency(order.total)}</span>
           </div>
         </div>
       </section>
@@ -87,17 +167,16 @@ export const OrderDetailsPage = ({ onBack }) => {
       <section style={styles.cardBlock}>
         <h3 style={styles.cardSectionTitle}>Customer & Shipping Address</h3>
         <div style={styles.addressListWrapper}>
-          <AddressDetailRow icon={UserIcon} label="Full Name" value="Selam Tesfaye" />
-          <AddressDetailRow icon={PinIcon} label="Region" value="Addis Ababa" />
-          <AddressDetailRow icon={PhoneIcon} label="Phone Number" value="+251 912 345 678" />
-          <AddressDetailRow icon={GlobeIcon} label="Country" value="Ethiopia" />
-          <AddressDetailRow icon={BuildingIcon} label="City" value="Addis Ababa" />
-          <AddressDetailRow icon={MapIcon} label="Sub City / Woreda" value="Yeka Sub City" />
-          <AddressDetailRow icon={HomeIcon} label="House No." value="Bole Road, Haya Hulet" />
+          <AddressDetailRow icon={UserIcon} label="Full Name" value={order.customer_name || 'N/A'} />
+          <AddressDetailRow icon={PhoneIcon} label="Phone Number" value={order.phone_number || 'N/A'} />
+          {order.region && <AddressDetailRow icon={PinIcon} label="Region" value={order.region} />}
+          {order.country && <AddressDetailRow icon={GlobeIcon} label="Country" value={order.country} />}
+          {order.city && <AddressDetailRow icon={BuildingIcon} label="City" value={order.city} />}
+          {order.address && <AddressDetailRow icon={MapIcon} label="Address" value={order.address} />}
         </div>
       </section>
 
-      {/* STATIC DECORATIVE CORE NAVIGATION FIXED POSITION TABS WRAPPER */}
+      {/* STICKY BOTTOM NAV */}
       <nav style={styles.bottomNav}>
         <div style={{ ...styles.navItem, color: '#00a84e' }}>
           <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" strokeWidth="2">

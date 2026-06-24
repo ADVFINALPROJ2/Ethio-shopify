@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import ProductFilters from '../components/ProductFilters';
 import ProductCard from '../components/ProductCard';
 import apiClient from '../../../lib/axios';
@@ -17,6 +17,7 @@ export default function ProductsPage({ slug, onGoToCart, userId }) {
   const [minPrice, setMinPrice] = useState('');
   const [maxPrice, setMaxPrice] = useState('');
   const [isFilterPanelOpen, setIsFilterPanelOpen] = useState(false);
+  const isAddingRef = useRef(false);
 
   const categories = useMemo(() => {
     if (!shop || !shop.products) return [];
@@ -90,18 +91,23 @@ export default function ProductsPage({ slug, onGoToCart, userId }) {
   }
 
   const handleAddToCart = async (product) => {
-    if (!userId) return;
+    if (!userId || isAddingRef.current) return;
+    isAddingRef.current = true;
+
+    setCartCount(prev => prev + 1);
+    if (window.Telegram?.WebApp?.HapticFeedback) {
+      window.Telegram.WebApp.HapticFeedback.impactOccurred('light');
+    }
+
     try {
-      const data = await addToCart(userId, product.id);
-      const items = data?.cart?.cart_items || [];
-      const totalItems = items.reduce((sum, item) => sum + item.quantity, 0);
-      setCartCount(totalItems);
-      if (window.Telegram?.WebApp?.HapticFeedback) {
-        window.Telegram.WebApp.HapticFeedback.impactOccurred('light');
-      }
+      await addToCart(userId, product.id);
+      fetchCartCount();
     } catch (err) {
+      fetchCartCount();
       const msg = err.response?.data?.errors?.[0] || 'could not add to cart';
       alert(msg);
+    } finally {
+      isAddingRef.current = false;
     }
   };
 
