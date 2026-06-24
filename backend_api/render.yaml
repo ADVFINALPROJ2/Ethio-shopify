@@ -2,6 +2,7 @@ services:
   - type: web
     name: ethio-shopify-api
     runtime: ruby
+    rootDir: backend_api
     region: ohio
     plan: free
     buildCommand: "./bin/render-build.sh"
