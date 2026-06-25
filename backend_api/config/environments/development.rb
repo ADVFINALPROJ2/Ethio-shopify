@@ -75,6 +75,7 @@ Rails.application.configure do
   config.hosts << /.*\.ngrok-free\.dev/
 
   Rails.application.routes.default_url_options = {
-    host: ENV.fetch("ngrok_url")
+    host: ENV.fetch("RENDER_URL", "localhost:3000"),
+    protocol: "http"
   }
 end
