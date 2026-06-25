@@ -39,6 +39,9 @@ gem "telegram-bot-ruby"
 # JSON Web Tokens for API authentication
 gem "jwt"
 
+# Rails Active Storage uses the AWS SDK for all S3-compatible providers
+gem "aws-sdk-s3", require: false
+
 group :development, :test do
   gem "sqlite3"
   # See https://guides.rubyonrails.org/debugging_rails_applications.html#debugging-with-the-debug-gem

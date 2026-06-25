@@ -12,7 +12,7 @@ class Shop < ApplicationRecord
   def logo_url
     return unless logo.attached?
 
-    Rails.application.routes.url_helpers.rails_blob_url(logo)
+    Rails.application.routes.url_helpers.url_for(logo)
   end
 
   def telegram_url
