@@ -1,7 +1,19 @@
 # Read about fixtures at https://api.rubyonrails.org/classes/ActiveRecord/FixtureSet.html
 
 one:
-  owner: one
+  id: 1
+  owner_id: 1
+  name: Abebe Textiles
+  category_id: 1
+  slug: abebe-textiles
+  phone_number: "+251911000001"
+  city: Addis Ababa
 
 two:
-  owner: two
+  id: 2
+  owner_id: 2
+  name: Alem Coffee
+  category_id: 2
+  slug: alem-coffee
+  phone_number: "+251911000002"
+  city: Dire Dawa

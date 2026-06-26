@@ -4,12 +4,14 @@ import ProductCard from '../components/ProductCard';
 import apiClient from '../../../lib/axios';
 import addToCart from '../../cart/api/addToCart';
 import getCart from '../../cart/api/getCart';
+import { BuyerProductDetailsPage } from './BuyerProductDetailsPage';
 
-export default function ProductsPage({ slug, onGoToCart, userId }) {
+export default function ProductsPage({ slug, onGoToCart, onGoToOrders, userId, cartVersion, onCartChanged }) {
   const [shop, setShop] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [cartCount, setCartCount] = useState(0);
+  const [selectedProductId, setSelectedProductId] = useState(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [sortBy, setSortBy] = useState('popular');
   const [viewMode, setViewMode] = useState('grid');
@@ -33,11 +35,9 @@ export default function ProductsPage({ slug, onGoToCart, userId }) {
   const fetchCartCount = useCallback(async () => {
     if (!userId) return;
     try {
-      const data = await getCart(userId);
-      const items = data?.cart?.cart_items || [];
-      const totalItems = items.reduce((sum, item) => sum + item.quantity, 0);
-      setCartCount(totalItems);
-    } catch (err) {
+      const data = await getCart();
+      setCartCount(data?.item_count || 0);
+    } catch (_err) {
       console.log('could not fetch cart');
     }
   }, [userId]);
@@ -57,6 +57,10 @@ export default function ProductsPage({ slug, onGoToCart, userId }) {
     fetchShop();
     fetchCartCount();
   }, [slug, fetchCartCount]);
+
+  useEffect(() => {
+    fetchCartCount();
+  }, [cartVersion, fetchCartCount]);
 
   if (loading) {
     return (
@@ -100,8 +104,9 @@ export default function ProductsPage({ slug, onGoToCart, userId }) {
     }
 
     try {
-      await addToCart(userId, product.id);
-      fetchCartCount();
+      const cart = await addToCart(userId, product.id);
+      setCartCount(cart.item_count || 0);
+      onCartChanged?.(cart.item_count || 0);
     } catch (err) {
       fetchCartCount();
       const msg = err.response?.data?.errors?.[0] || 'could not add to cart';
@@ -110,6 +115,22 @@ export default function ProductsPage({ slug, onGoToCart, userId }) {
       isAddingRef.current = false;
     }
   };
+
+  if (selectedProductId) {
+    return (
+      <BuyerProductDetailsPage
+        slug={slug}
+        productId={selectedProductId}
+        userId={userId}
+        onBack={() => setSelectedProductId(null)}
+        onCartChanged={(count) => {
+          setCartCount(count);
+          onCartChanged?.(count);
+        }}
+        onGoToCart={onGoToCart}
+      />
+    );
+  }
 
   return (
     <div style={styles.container}>
@@ -196,7 +217,14 @@ export default function ProductsPage({ slug, onGoToCart, userId }) {
                 price: `ETB ${Number(product.price || 0).toLocaleString()}`,
                 img: product.image_urls?.[0]
               };
-              return <ProductCard key={product.id} product={formattedProduct} onAddToCart={handleAddToCart} />
+              return (
+                <ProductCard
+                  key={product.id}
+                  product={formattedProduct}
+                  onAddToCart={handleAddToCart}
+                  onViewDetails={(selected) => setSelectedProductId(selected.id)}
+                />
+              );
             })}
           </div>
         ) : (
@@ -217,6 +245,9 @@ export default function ProductsPage({ slug, onGoToCart, userId }) {
             </p>
           </div>
         </div>
+        <button style={styles.ordersBtn} onClick={() => onGoToOrders && onGoToOrders()}>
+          Orders
+        </button>
         <button style={styles.floatingCartBtn} onClick={() => onGoToCart && onGoToCart()}>
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
             <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z" />
@@ -462,6 +493,17 @@ const styles = {
     cursor: 'pointer',
     boxShadow: '0 4px 12px rgba(0,168,78,0.3)',
     flexShrink: 0,
+  },
+  ordersBtn: {
+    border: '1px solid #dcfce7',
+    backgroundColor: '#fff',
+    color: '#00a84e',
+    borderRadius: '8px',
+    padding: '9px 12px',
+    fontSize: '12px',
+    fontWeight: '800',
+    cursor: 'pointer',
+    marginRight: '10px',
   },
   floatingBadge: {
     position: 'absolute',

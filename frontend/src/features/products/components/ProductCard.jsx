@@ -1,8 +1,8 @@
 import React from 'react';
 
-export default function ProductCard({ product, onAddToCart }) {
+export default function ProductCard({ product, onAddToCart, onViewDetails }) {
   return (
-    <div style={styles.card}>
+    <div style={styles.card} onClick={() => onViewDetails?.(product)} role="button" tabIndex={0}>
       {/* Product Image */}
       <div style={styles.imageWrapper}>
         {product.img ? (
@@ -23,7 +23,15 @@ export default function ProductCard({ product, onAddToCart }) {
         <h3 style={styles.name}>{product.name}</h3>
         <div style={styles.footer}>
           <span style={styles.price}>{product.price}</span>
-          <button type="button" aria-label="Add to cart" style={styles.cartBtn} onClick={() => onAddToCart && onAddToCart(product)}>
+          <button
+            type="button"
+            aria-label="Add to cart"
+            style={styles.cartBtn}
+            onClick={(event) => {
+              event.stopPropagation();
+              onAddToCart && onAddToCart(product);
+            }}
+          >
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z" />
               <line x1="3" y1="6" x2="21" y2="6" />
@@ -46,6 +54,7 @@ const styles = {
     flexDirection: 'column',
     boxShadow: '0 1px 3px rgba(0,0,0,0.04)',
     transition: 'box-shadow 0.2s ease',
+    cursor: 'pointer',
   },
   imageWrapper: {
     width: '100%',

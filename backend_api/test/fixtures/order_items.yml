@@ -1,13 +1,19 @@
 # Read about fixtures at https://api.rubyonrails.org/classes/ActiveRecord/FixtureSet.html
 
 one:
-  order: one
-  product: one
+  id: 1
+  order_id: 1
+  product_id: 1
   quantity: 1
   price: 9.99
+  product_name: Handwoven Scarf
+  product_price: 29.99
 
 two:
-  order: two
-  product: two
+  id: 2
+  order_id: 2
+  product_id: 2
   quantity: 1
   price: 9.99
+  product_name: Coffee Set
+  product_price: 89.99

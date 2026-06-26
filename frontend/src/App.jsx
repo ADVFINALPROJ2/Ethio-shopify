@@ -6,6 +6,7 @@ import { SellerLandingPage } from './features/shop-creation/pages/SellerLandingP
 import { createShop } from './features/shop-creation/api/createShop';
 import { useAuth } from './features/auth/context/useAuth';
 import CartPage from './features/cart/pages/CartPage';
+import { BuyerOrdersPage } from './features/orders/pages/BuyerOrdersPage';
 import './App.css';
 import { getStartParam } from '../src/lib/getStartParam';
 
@@ -25,7 +26,12 @@ function App() {
   const [isCreatingShop, setIsCreatingShop] = useState(false);
   const [isSubmittingShop, setIsSubmittingShop] = useState(false);
   const [shopCreationError, setShopCreationError] = useState('');
-  const [showCart, setShowCart] = useState(false);
+  const [buyerView, setBuyerView] = useState('products');
+  const [cartVersion, setCartVersion] = useState(0);
+
+  const handleCartChanged = () => {
+    setCartVersion((version) => version + 1);
+  };
 
   const handleShopCreated = async (formData) => {
     setIsSubmittingShop(true);
@@ -92,15 +98,31 @@ function App() {
   }
 
   if (storefrontSlug) {
+    if (buyerView === 'cart') {
+      return (
+        <CartPage
+          userId={user?.id}
+          onBack={() => setBuyerView('products')}
+          onViewOrders={() => setBuyerView('orders')}
+          visible
+          onCartChanged={handleCartChanged}
+        />
+      );
+    }
+
+    if (buyerView === 'orders') {
+      return <BuyerOrdersPage onBack={() => setBuyerView('products')} />;
+    }
+
     return (
-      <>
-        <div style={{ display: showCart ? 'none' : 'block' }}>
-          <ProductsPage slug={storefrontSlug} userId={user?.id} onGoToCart={() => setShowCart(true)} />
-        </div>
-        <div style={{ display: showCart ? 'block' : 'none' }}>
-          <CartPage userId={user?.id} onBack={() => setShowCart(false)} visible={showCart} />
-        </div>
-      </>
+      <ProductsPage
+        slug={storefrontSlug}
+        userId={user?.id}
+        onGoToCart={() => setBuyerView('cart')}
+        onGoToOrders={() => setBuyerView('orders')}
+        cartVersion={cartVersion}
+        onCartChanged={handleCartChanged}
+      />
     );
   }
 

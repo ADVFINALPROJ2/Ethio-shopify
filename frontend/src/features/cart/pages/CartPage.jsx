@@ -1,10 +1,10 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import getCart from '../api/getCart';
 import updateCartItem from '../api/updateCartItem';
 import removeCartItem from '../api/removeCartItem';
 import checkoutCart from '../api/checkoutCart';
 
-const CartPage = ({ userId, onBack, visible }) => {
+const CartPage = ({ userId, onBack, visible, onCartChanged, onViewOrders }) => {
   const [cartData, setCartData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -19,15 +19,37 @@ const CartPage = ({ userId, onBack, visible }) => {
     userIdRef.current = userId;
   }, [userId]);
 
-  const visibleRef = useRef(visible);
-  useEffect(() => {
-    if (!visibleRef.current && visible) {
-      fetchCart();
-    }
-    visibleRef.current = visible;
-  }, [visible]);
+  const applyCartData = useCallback((data) => {
+    setCartData(data);
+    onCartChanged?.(data?.item_count || 0);
+  }, [onCartChanged]);
 
-  const fetchCart = async () => {
+  const getSummary = (items = []) => ({
+    subtotal: items.reduce((sum, item) => {
+      return sum + Number(item.product?.price || 0) * Number(item.quantity || 0);
+    }, 0),
+    item_count: items.reduce((sum, item) => sum + Number(item.quantity || 0), 0)
+  });
+
+  const updateCartItems = (updater) => {
+    setCartData(prev => {
+      if (!prev) return prev;
+      const nextItems = updater(prev.cart?.cart_items || []);
+      const summary = getSummary(nextItems);
+      onCartChanged?.(summary.item_count);
+      return {
+        ...prev,
+        cart: {
+          ...prev.cart,
+          cart_items: nextItems
+        },
+        subtotal: summary.subtotal,
+        item_count: summary.item_count
+      };
+    });
+  };
+
+  const fetchCart = useCallback(async () => {
     if (!userId) return;
     const capturedUserId = userId;
     setLoading(true);
@@ -35,7 +57,7 @@ const CartPage = ({ userId, onBack, visible }) => {
     try {
       const data = await getCart(capturedUserId);
       if (userIdRef.current === capturedUserId) {
-        setCartData(data);
+        applyCartData(data);
       }
     } catch (err) {
       console.log('error fetching cart', err);
@@ -47,35 +69,34 @@ const CartPage = ({ userId, onBack, visible }) => {
         setLoading(false);
       }
     }
-  };
+  }, [applyCartData, userId]);
+
+  const visibleRef = useRef(visible);
+  useEffect(() => {
+    if (!visibleRef.current && visible) {
+      fetchCart();
+    }
+    visibleRef.current = visible;
+  }, [fetchCart, visible]);
 
   useEffect(() => {
     fetchCart();
-  }, [userId]);
+  }, [fetchCart]);
 
   const handleQtyChange = async (itemId, newQty) => {
     if (newQty < 1 || isUpdating) return;
     setIsUpdating(true);
 
     const prevCartData = cartData;
-    setCartData(prev => {
-      if (!prev) return prev;
-      return {
-        ...prev,
-        cart: {
-          ...prev.cart,
-          cart_items: prev.cart.cart_items.map(item =>
-            item.id === itemId ? { ...item, quantity: newQty } : item
-          )
-        }
-      };
-    });
+    updateCartItems(items => items.map(item =>
+      item.id === itemId ? { ...item, quantity: newQty } : item
+    ));
 
     try {
       const data = await updateCartItem(userId, itemId, newQty);
-      setCartData(data);
+      applyCartData(data);
     } catch (err) {
-      setCartData(prevCartData);
+      applyCartData(prevCartData);
       alert(err.response?.data?.errors?.[0] || 'cant update quantity');
     } finally {
       setIsUpdating(false);
@@ -86,22 +107,13 @@ const CartPage = ({ userId, onBack, visible }) => {
     if (!window.confirm('Remove this item from cart?')) return;
 
     const prevCartData = cartData;
-    setCartData(prev => {
-      if (!prev) return prev;
-      return {
-        ...prev,
-        cart: {
-          ...prev.cart,
-          cart_items: prev.cart.cart_items.filter(item => item.id !== itemId)
-        }
-      };
-    });
+    updateCartItems(items => items.filter(item => item.id !== itemId));
 
     try {
       const data = await removeCartItem(userId, itemId);
-      setCartData(data);
-    } catch (err) {
-      setCartData(prevCartData);
+      applyCartData(data);
+    } catch (_err) {
+      applyCartData(prevCartData);
       alert('failed to remove item');
     }
   };
@@ -117,7 +129,8 @@ const CartPage = ({ userId, onBack, visible }) => {
       const data = await checkoutCart(userId, form);
       setOrderResult({ ...data.order, ...form });
       setStep('done');
-      setCartData(null);
+      applyCartData(data.cart);
+      setForm({ phone: '', address: '', notes: '' });
     } catch (err) {
       const msg = err.response?.data?.errors?.[0] || 'Checkout failed';
       alert(msg);
@@ -200,6 +213,14 @@ const CartPage = ({ userId, onBack, visible }) => {
             <p style={{ margin: '4px 0', fontSize: '14px', color: '#0e1e25' }}>
               Total: ETB {Number(orderResult.total).toLocaleString()}
             </p>
+          </div>
+          <div style={{ display: 'grid', gap: '10px' }}>
+            <button onClick={onViewOrders} style={styles.checkoutBtn}>
+              View Orders
+            </button>
+            <button onClick={onBack} style={styles.secondaryBtn}>
+              Continue Shopping
+            </button>
           </div>
         </div>
       </div>
@@ -533,6 +554,17 @@ const styles = {
     backgroundColor: '#00a84e',
     color: '#fff',
     border: 'none',
+    borderRadius: '12px',
+    fontSize: '16px',
+    fontWeight: '600',
+    cursor: 'pointer'
+  },
+  secondaryBtn: {
+    width: '100%',
+    padding: '14px',
+    backgroundColor: '#fff',
+    color: '#00a84e',
+    border: '1px solid #00a84e',
     borderRadius: '12px',
     fontSize: '16px',
     fontWeight: '600',

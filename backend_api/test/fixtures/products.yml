@@ -1,17 +1,23 @@
 one:
+  id: 1
   name: Handwoven Scarf
   description: Traditional Ethiopian handwoven scarf made from high-quality cotton
   price: 29.99
-  user: one
+  user_id: 1
+  shop_id: 1
+  product_category_id: 1
   quantity: 10
   status: active
   low_stock_threshold: 5
 
 two:
+  id: 2
   name: Coffee Set
   description: Traditional Ethiopian coffee ceremony set with jebena and cups
   price: 89.99
-  user: two
+  user_id: 2
+  shop_id: 2
+  product_category_id: 2
   quantity: 5
   status: active
   low_stock_threshold: 5

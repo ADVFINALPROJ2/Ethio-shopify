@@ -54,6 +54,31 @@ body {
   margin: 0;
 }
 
+input,
+textarea,
+select {
+  color-scheme: light;
+  color: #0e1e25;
+  caret-color: #00a84e;
+  -webkit-text-fill-color: #0e1e25;
+  opacity: 1;
+}
+
+input::placeholder,
+textarea::placeholder {
+  color: #94a3b8;
+  -webkit-text-fill-color: #94a3b8;
+  opacity: 1;
+}
+
+input:-webkit-autofill,
+textarea:-webkit-autofill,
+select:-webkit-autofill {
+  -webkit-text-fill-color: #0e1e25;
+  caret-color: #00a84e;
+  transition: background-color 9999s ease-out;
+}
+
 #root {
   width: 1126px;
   max-width: 100%;

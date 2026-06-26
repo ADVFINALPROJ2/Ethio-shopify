@@ -32,14 +32,20 @@ class CartItemsController < ApplicationController
 
   def update
     cart_item = @cart.cart_items.find(params[:id])
+    quantity = params[:quantity].to_i
 
-    if cart_item.product.quantity < params[:quantity].to_i
+    unless quantity > 0
+      render json: { errors: ["quantity must be greater than 0"] }, status: :unprocessable_entity
+      return
+    end
+
+    if cart_item.product.quantity < quantity
       render json: { errors: ["Insufficient stock"] },
              status: :unprocessable_entity
       return
     end
 
-    if cart_item.update(quantity: params[:quantity])
+    if cart_item.update(quantity: quantity)
       render json: cart_response, status: :ok
     else
       render json: { errors: cart_item.errors.full_messages }, status: :unprocessable_entity
@@ -55,16 +61,13 @@ class CartItemsController < ApplicationController
   private
 
   def set_cart
-    if current_user.id != params[:user_id].to_i
-      render json: { error: "Forbidden" }, status: :forbidden
-      return
-    end
     @cart = current_user.cart || current_user.create_cart!
   end
 
   def cart_response
     cart_items = @cart.cart_items.includes(product: { images_attachments: :blob })
     subtotal = cart_items.sum { |item| item.quantity.to_i * item.product.price }
+    item_count = cart_items.sum { |item| item.quantity.to_i }
 
     {
       cart: {
@@ -91,7 +94,8 @@ class CartItemsController < ApplicationController
           }
         }
       },
-      subtotal: subtotal
+      subtotal: subtotal,
+      item_count: item_count
     }
   end
 end

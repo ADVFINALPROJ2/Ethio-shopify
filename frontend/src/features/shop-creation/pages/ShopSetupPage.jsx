@@ -486,6 +486,11 @@ const styles = {
     boxSizing: 'border-box',
     outline: 'none',
     backgroundColor: '#fdfdfd',
+    color: '#0e1e25',
+    caretColor: '#00a84e',
+    WebkitTextFillColor: '#0e1e25',
+    opacity: 1,
+    colorScheme: 'light',
   },
   categoryCard: {
     display: 'flex',
@@ -577,6 +582,11 @@ const styles = {
     resize: 'none',
     fontFamily: 'inherit',
     backgroundColor: '#fdfdfd',
+    color: '#0e1e25',
+    caretColor: '#00a84e',
+    WebkitTextFillColor: '#0e1e25',
+    opacity: 1,
+    colorScheme: 'light',
     lineHeight: '1.5',
   },
   charCount: {

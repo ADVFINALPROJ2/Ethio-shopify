@@ -1,9 +1,11 @@
 # Read about fixtures at https://api.rubyonrails.org/classes/ActiveRecord/FixtureSet.html
 
 one:
-  name: MyString
-  category: one
+  id: 1
+  name: Scarves
+  category_id: 1
 
 two:
-  name: MyString
-  category: two
+  id: 2
+  name: Coffee Sets
+  category_id: 2

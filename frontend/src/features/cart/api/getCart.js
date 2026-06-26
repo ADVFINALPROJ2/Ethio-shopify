@@ -1,9 +1,7 @@
 import apiClient from '../../../lib/axios';
 
-const getCart = async (userId) => {
-  const response = await apiClient.get('/cart', {
-    params: { user_id: userId }
-  });
+const getCart = async () => {
+  const response = await apiClient.get('/cart');
   return response.data;
 };
 

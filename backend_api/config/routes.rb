@@ -16,8 +16,11 @@ Rails.application.routes.draw do
   get "shops/me", to: "shops#me"
   patch "shops/me", to: "shops#update_me"
   resources :shops, only: [ :create, :update ]
+  get "shops/:slug/products/:id", to: "products#storefront_show"
   get "shops/:slug", to: "shops#show"
 
+  get "buyer/orders", to: "orders#buyer_index"
+  get "buyer/orders/:id", to: "orders#buyer_show"
   resources :orders, only: [ :index, :show ]
   resources :categories, only: [:index]
   resources :product_categories, only: [:index]

@@ -1,4 +1,5 @@
 one:
+  id: 1
   username: abekesht
   fullname: Abebe Bekele
   phone_number: "+251911000001"
@@ -7,6 +8,7 @@ one:
   last_name: Bekele
 
 two:
+  id: 2
   username: alemtsehay
   fullname: Alemtsehay Worku
   phone_number: "+251911000002"

@@ -44,7 +44,7 @@ export const ProductDetailsPage = ({ productId, onBack }) => {
         image_urls: prev.image_urls.filter((_, i) => prev.images?.[i]?.id !== imageId),
         images: prev.images?.filter(img => img.id !== imageId)
       } : prev);
-    } catch (err) {
+    } catch (_err) {
       alert('Failed to remove image');
     } finally {
       setDeletingImgId(null);
@@ -60,7 +60,7 @@ export const ProductDetailsPage = ({ productId, onBack }) => {
       Array.from(files).forEach(file => formData.append('product[images][]', file));
       const updated = await updateProduct(productId, formData);
       setProduct(updated);
-    } catch (err) {
+    } catch (_err) {
       alert('Failed to upload images');
     } finally {
       setIsUploading(false);

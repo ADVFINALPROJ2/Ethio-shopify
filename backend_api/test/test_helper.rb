@@ -4,12 +4,15 @@ require "rails/test_help"
 
 module ActiveSupport
   class TestCase
+    include ActiveJob::TestHelper
+
     # Run tests in parallel with specified workers
     parallelize(workers: :number_of_processors)
 
     # Load fixtures in dependency order to prevent referential integrity issues
     fixtures :users
     fixtures :categories
+    fixtures :product_categories
     fixtures :shops
     fixtures :products
     fixtures :carts

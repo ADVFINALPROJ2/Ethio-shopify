@@ -15,7 +15,13 @@ class ProductsControllerTest < ActionDispatch::IntegrationTest
 
   test "should create product" do
     assert_difference("Product.count") do
-      post products_url, params: { product: { name: "New Product", price: 29.99, user_id: @user.id } }, headers: @headers, as: :json
+      post products_url, params: {
+        product: {
+          name: "New Product",
+          price: 29.99,
+          product_category_id: product_categories(:one).id
+        }
+      }, headers: @headers, as: :json
     end
     assert_response :created
   end
@@ -42,7 +48,9 @@ class ProductsControllerTest < ActionDispatch::IntegrationTest
       name: "Disposable Product",
       price: 9.99,
       quantity: 1,
-      user: @user
+      user: @user,
+      shop: shops(:one),
+      product_category: product_categories(:one)
     )
 
     assert_difference("Product.count", -1) do

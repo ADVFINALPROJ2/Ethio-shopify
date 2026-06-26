@@ -2,6 +2,7 @@ class ProductsController < ApplicationController
   before_action :authenticate_user!
   before_action :set_product, only: [ :show, :update, :destroy, :orders ]
   before_action :set_public_product, only: [ :purchase ]
+  before_action :set_storefront_product, only: [ :storefront_show ]
 
   def index
     @products = current_user.products.includes(:user, images_attachments: :blob).order(created_at: :desc)
@@ -10,6 +11,10 @@ class ProductsController < ApplicationController
 
   def show
     render json: product_json(@product), status: :ok
+  end
+
+  def storefront_show
+    render json: public_product_json(@product), status: :ok
   end
 
   def create
@@ -83,6 +88,13 @@ class ProductsController < ApplicationController
     @product = Product.find(params[:id])
   end
 
+  def set_storefront_product
+    shop = Shop.find_by!(slug: params[:slug])
+    @product = shop.products.includes(images_attachments: :blob, product_category: :category)
+                   .where(status: "active")
+                   .find(params[:id])
+  end
+
   def product_params
     params.require(:product).permit(:name, :description, :price, :quantity, :status, :low_stock_threshold, :product_category_id)
   end
@@ -103,6 +115,26 @@ class ProductsController < ApplicationController
              "total_sold" => product.order_items.joins(:order).where(orders: { seller_id: current_user.id }).sum(:quantity),
              "total_revenue" => product.order_items.joins(:order).where(orders: { seller_id: current_user.id }).sum("order_items.quantity * order_items.price").to_s
            )
+  end
+
+  def public_product_json(product)
+    {
+      id: product.id,
+      name: product.name,
+      description: product.description,
+      price: product.price,
+      quantity: product.quantity,
+      status: product.status,
+      image_urls: product.image_urls,
+      images: product.images.map { |img| { id: img.id, url: product_image_url(img) } },
+      product_category: product.product_category&.as_json(only: [ :id, :name ]),
+      product_category_name: product.product_category&.name,
+      shop: {
+        id: product.shop&.id,
+        name: product.shop&.name,
+        slug: product.shop&.slug
+      }
+    }
   end
 
   def product_image_url(image)

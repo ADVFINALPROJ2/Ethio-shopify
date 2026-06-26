@@ -31,7 +31,8 @@ class Shop < ApplicationRecord
       }
     ).merge(
       "logo_url" => logo_url,
-      "telegram_url" => telegram_url
+      "telegram_url" => telegram_url,
+      "category_name" => category&.name
     )
   end
 

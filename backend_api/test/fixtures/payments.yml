@@ -1,11 +1,13 @@
 # Read about fixtures at https://api.rubyonrails.org/classes/ActiveRecord/FixtureSet.html
 
 one:
-  order: one
+  id: 1
+  order_id: 1
   amount: 9.99
-  status: MyString
+  status: pending
 
 two:
-  order: two
+  id: 2
+  order_id: 2
   amount: 9.99
-  status: MyString
+  status: paid

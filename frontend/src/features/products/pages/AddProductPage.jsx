@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { ProductFormField } from '../components/ProductFormField';
 import { createProduct } from '../api/createProduct';
+import { updateProduct } from '../api/updateProduct';
 import { getProductCategories } from '../api/getProductCategories';
 
 export const AddProductPage = ({ onCancel, onSaveSuccess }) => {
@@ -9,9 +10,9 @@ export const AddProductPage = ({ onCancel, onSaveSuccess }) => {
     description: '',
     price: '',
     stock: '',
-    image: null,
     productCategoryId: ''
   });
+  const [selectedImages, setSelectedImages] = useState([]);
 
   const [nameCount, setNameCount] = useState(0);
   const [descCount, setDescCount] = useState(0);
@@ -20,6 +21,7 @@ export const AddProductPage = ({ onCancel, onSaveSuccess }) => {
   const [productCategories, setProductCategories] = useState([]);
   const [isCategoryDropdownOpen, setIsCategoryDropdownOpen] = useState(false);
   const dropdownRef = useRef(null);
+  const selectedImagesRef = useRef([]);
 
   useEffect(() => {
     const handleClickOutside = (event) => {
@@ -30,6 +32,16 @@ export const AddProductPage = ({ onCancel, onSaveSuccess }) => {
     document.addEventListener('mousedown', handleClickOutside);
     return () => {
       document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, []);
+
+  useEffect(() => {
+    selectedImagesRef.current = selectedImages;
+  }, [selectedImages]);
+
+  useEffect(() => {
+    return () => {
+      selectedImagesRef.current.forEach((image) => URL.revokeObjectURL(image.previewUrl));
     };
   }, []);
 
@@ -62,15 +74,61 @@ export const AddProductPage = ({ onCancel, onSaveSuccess }) => {
     setProductData(prev => ({ ...prev, [name]: value }));
   };
 
-  const handleFileChange = (e) => {
-    const file = e.target.files[0];
-    if (file) {
-      if (file.size <= 5 * 1024 * 1024) {
-        setProductData(prev => ({ ...prev, image: file }));
-      } else {
-        alert("The selected image file is too large. Maximum size allowed is 5MB.");
+  const addSelectedFiles = (fileList) => {
+    const files = Array.from(fileList || []);
+    const validImages = [];
+    const rejectedFiles = [];
+
+    files.forEach((file) => {
+      if (file.size > 5 * 1024 * 1024) {
+        rejectedFiles.push(file.name);
+        return;
       }
+
+      const imageId = typeof crypto !== 'undefined' && crypto.randomUUID
+        ? crypto.randomUUID()
+        : `${Date.now()}-${Math.random()}`;
+
+      validImages.push({
+        id: `${file.name}-${file.size}-${file.lastModified}-${imageId}`,
+        file,
+        previewUrl: URL.createObjectURL(file),
+        progress: 0,
+        status: 'pending'
+      });
+    });
+
+    if (validImages.length) {
+      setSelectedImages(prev => [...prev, ...validImages]);
     }
+
+    if (rejectedFiles.length) {
+      alert(`Some images are larger than 5MB: ${rejectedFiles.join(', ')}`);
+    }
+  };
+
+  const handleFileChange = (e) => {
+    addSelectedFiles(e.target.files);
+    e.target.value = '';
+  };
+
+  const handleDrop = (e) => {
+    e.preventDefault();
+    addSelectedFiles(e.dataTransfer.files);
+  };
+
+  const removeSelectedImage = (imageId) => {
+    setSelectedImages(prev => {
+      const image = prev.find(item => item.id === imageId);
+      if (image) URL.revokeObjectURL(image.previewUrl);
+      return prev.filter(item => item.id !== imageId);
+    });
+  };
+
+  const updateImageProgress = (imageId, updates) => {
+    setSelectedImages(prev => prev.map(image => (
+      image.id === imageId ? { ...image, ...updates } : image
+    )));
   };
 
   const handleSubmit = async (e) => {
@@ -83,15 +141,27 @@ export const AddProductPage = ({ onCancel, onSaveSuccess }) => {
     formData.append('product[quantity]', productData.stock);
     formData.append('product[product_category_id]', productData.productCategoryId);
 
-    if (productData.image) {
-      formData.append('product[images][]', productData.image);
-    }
-
     setIsSaving(true);
     setErrorMessage('');
 
     try {
-      await createProduct(formData);
+      const createdProduct = await createProduct(formData);
+
+      for (const image of selectedImages) {
+        const imageData = new FormData();
+        imageData.append('product[images][]', image.file);
+        updateImageProgress(image.id, { progress: 0, status: 'uploading' });
+        await updateProduct(createdProduct.id, imageData, {
+          headers: { 'Content-Type': 'multipart/form-data' },
+          onUploadProgress: (progressEvent) => {
+            if (!progressEvent.total) return;
+            const progress = Math.round((progressEvent.loaded * 100) / progressEvent.total);
+            updateImageProgress(image.id, { progress });
+          }
+        });
+        updateImageProgress(image.id, { progress: 100, status: 'done' });
+      }
+
       if (window.Telegram?.WebApp) {
         window.Telegram.WebApp.HapticFeedback.notificationOccurred('success');
       }
@@ -245,8 +315,12 @@ export const AddProductPage = ({ onCancel, onSaveSuccess }) => {
         </ProductFormField>
 
         {/* IMAGE UPLOAD TARGET BOX */}
-        <ProductFormField label="Product Image" subLabel="Upload a clear image of your product.">
-          <div style={styles.uploadBox}>
+        <ProductFormField label="Product Images" subLabel="Upload clear images of your product.">
+          <div
+            style={styles.uploadBox}
+            onDragOver={(e) => e.preventDefault()}
+            onDrop={handleDrop}
+          >
             <div style={styles.uploadIconCircle}>
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#00a84e" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
@@ -256,19 +330,49 @@ export const AddProductPage = ({ onCancel, onSaveSuccess }) => {
               <div style={styles.miniPlusBadge}>＋</div>
             </div>
             <div style={styles.uploadTextContainer}>
-              <span style={styles.uploadTitle}>Upload Product Image</span>
-              <span style={styles.uploadSubtitle}>JPG, PNG or WEBP. Max size 5MB.</span>
+              <span style={styles.uploadTitle}>Upload Product Images</span>
+              <span style={styles.uploadSubtitle}>Select or drop multiple JPG, PNG or WEBP files.</span>
             </div>
             <label style={styles.chooseImageLabel}>
-              Choose Image
+              Choose Images
               <input
                 type="file"
                 accept=".jpg,.jpeg,.png,.webp"
+                multiple
                 onChange={handleFileChange}
                 style={{ display: 'none' }}
               />
             </label>
           </div>
+          {selectedImages.length > 0 && (
+            <div style={styles.previewGrid}>
+              {selectedImages.map((image) => (
+                <div key={image.id} style={styles.previewCard}>
+                  <img src={image.previewUrl} alt={image.file.name} style={styles.previewImage} />
+                  <button
+                    type="button"
+                    onClick={() => removeSelectedImage(image.id)}
+                    disabled={isSaving}
+                    style={styles.removeImageBtn}
+                    aria-label={`Remove ${image.file.name}`}
+                  >
+                    ×
+                  </button>
+                  <div style={styles.previewMeta}>
+                    <span style={styles.previewName}>{image.file.name}</span>
+                    {image.status !== 'pending' && (
+                      <div style={styles.progressTrack}>
+                        <div style={{ ...styles.progressFill, width: `${image.progress}%` }} />
+                      </div>
+                    )}
+                    {image.status !== 'pending' && (
+                      <span style={styles.progressText}>{image.progress}%</span>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
         </ProductFormField>
 
         {/* ACTION ACTION BUTTONS SPLIT BAR */}
@@ -460,6 +564,71 @@ const styles = {
     cursor: 'pointer',
     textAlign: 'center',
     whiteSpace: 'nowrap',
+  },
+  previewGrid: {
+    display: 'grid',
+    gridTemplateColumns: 'repeat(2, minmax(0, 1fr))',
+    gap: '10px',
+    marginTop: '10px',
+  },
+  previewCard: {
+    position: 'relative',
+    border: '1px solid #e2e8f0',
+    borderRadius: '8px',
+    overflow: 'hidden',
+    backgroundColor: '#fff',
+  },
+  previewImage: {
+    width: '100%',
+    aspectRatio: '1 / 1',
+    objectFit: 'cover',
+    display: 'block',
+    backgroundColor: '#f8fafc',
+  },
+  removeImageBtn: {
+    position: 'absolute',
+    top: '6px',
+    right: '6px',
+    width: '24px',
+    height: '24px',
+    borderRadius: '50%',
+    border: 'none',
+    backgroundColor: 'rgba(15, 23, 42, 0.78)',
+    color: '#fff',
+    fontSize: '18px',
+    lineHeight: 1,
+    cursor: 'pointer',
+  },
+  previewMeta: {
+    padding: '8px',
+  },
+  previewName: {
+    display: 'block',
+    overflow: 'hidden',
+    textOverflow: 'ellipsis',
+    whiteSpace: 'nowrap',
+    color: '#475569',
+    fontSize: '11px',
+    fontWeight: '600',
+  },
+  progressTrack: {
+    height: '5px',
+    marginTop: '7px',
+    borderRadius: '999px',
+    backgroundColor: '#e2e8f0',
+    overflow: 'hidden',
+  },
+  progressFill: {
+    height: '100%',
+    backgroundColor: '#00a84e',
+    transition: 'width 0.15s ease',
+  },
+  progressText: {
+    display: 'block',
+    marginTop: '3px',
+    color: '#00a84e',
+    fontSize: '11px',
+    fontWeight: '700',
   },
   actionButtonGroup: {
     display: 'flex',

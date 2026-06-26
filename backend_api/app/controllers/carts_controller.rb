@@ -1,40 +1,9 @@
 class CartsController < ApplicationController
   before_action :authenticate_user!
-  before_action :verify_ownership
 
   def show
     cart = current_user.cart || current_user.create_cart!
-
-    cart_items = cart.cart_items.includes(product: { images_attachments: :blob })
-    subtotal = cart_items.sum { |item| item.quantity.to_i * item.product.price }
-
-    render json: {
-      cart: {
-        id: cart.id,
-        user_id: cart.user_id,
-        cart_items: cart_items.map { |item|
-          product = item.product
-          {
-            id: item.id,
-            cart_id: item.cart_id,
-            product_id: item.product_id,
-            quantity: item.quantity,
-            created_at: item.created_at,
-            updated_at: item.updated_at,
-            product: {
-              id: product.id,
-              name: product.name,
-              price: product.price,
-              description: product.description,
-              quantity: product.quantity,
-              status: product.status,
-              image_urls: product.image_urls
-            }
-          }
-        }
-      },
-      subtotal: subtotal
-    }, status: :ok
+    render json: cart_response(cart), status: :ok
   end
 
   def checkout
@@ -98,6 +67,7 @@ class CartsController < ApplicationController
       end
 
       cart.cart_items.destroy_all
+      cart.reload
     end
 
     first_order = orders.first
@@ -109,7 +79,8 @@ class CartsController < ApplicationController
         status: first_order.status,
         total: orders.sum(&:total),
         created_at: first_order.created_at
-      }
+      },
+      cart: cart_response(cart)
     }, status: :created
 
   rescue StandardError => e
@@ -125,9 +96,38 @@ class CartsController < ApplicationController
 
   private
 
-  def verify_ownership
-    return if current_user.id == params[:user_id].to_i
+  def cart_response(cart)
+    cart_items = cart.cart_items.includes(product: { images_attachments: :blob })
+    subtotal = cart_items.sum { |item| item.quantity.to_i * item.product.price }
+    item_count = cart_items.sum { |item| item.quantity.to_i }
 
-    render json: { error: "Forbidden" }, status: :forbidden
+    {
+      cart: {
+        id: cart.id,
+        user_id: cart.user_id,
+        cart_items: cart_items.map { |item|
+          product = item.product
+          {
+            id: item.id,
+            cart_id: item.cart_id,
+            product_id: item.product_id,
+            quantity: item.quantity,
+            created_at: item.created_at,
+            updated_at: item.updated_at,
+            product: {
+              id: product.id,
+              name: product.name,
+              price: product.price,
+              description: product.description,
+              quantity: product.quantity,
+              status: product.status,
+              image_urls: product.image_urls
+            }
+          }
+        }
+      },
+      subtotal: subtotal,
+      item_count: item_count
+    }
   end
 end

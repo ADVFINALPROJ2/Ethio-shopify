@@ -42,7 +42,14 @@ class ProductTest < ActiveSupport::TestCase
   end
 
   test "should have default low_stock_threshold" do
-    product = Product.new(name: "Test", price: 10, quantity: 5, user: @product.user)
+    product = Product.new(
+      name: "Test",
+      price: 10,
+      quantity: 5,
+      user: @product.user,
+      shop: shops(:one),
+      product_category: product_categories(:one)
+    )
     assert_equal 5, product.low_stock_threshold
   end
 

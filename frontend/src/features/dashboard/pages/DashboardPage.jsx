@@ -5,7 +5,7 @@ import { AddProductPage } from '../../products/pages/AddProductPage';
 import { ProductDetailsPage } from '../../products/pages/ProductDetailsPage';
 import { OrdersPage } from '../../orders/pages/OrdersPage';
 import { OrderDetailsPage } from '../../orders/pages/OrderDetailsPage';
-import { EditProfilePage } from '../../profile/pages/EditProfilePage';
+import { ShopProfilePage } from '../../profile/pages/ShopProfilePage';
 import { getDashboardStats } from '../api/getDashboardStats';
 import { getMyShop } from '../api/getMyShop';
 
@@ -129,7 +129,14 @@ export const DashboardPage = () => {
   if (activeTab !== 'dashboard') {
     const page = activeTab === 'orders'
       ? <OrdersPage onSelectOrder={(orderId) => { setSelectedOrderId(orderId); setView('order-details'); }} />
-      : <EditProfilePage onCancel={() => setActiveTab('dashboard')} onSave={() => setActiveTab('dashboard')} />;
+      : (
+        <ShopProfilePage
+          onSave={(updatedShop) => {
+            setShop(updatedShop);
+            loadDashboard();
+          }}
+        />
+      );
 
     return (
       <div style={{ minHeight: '100vh' }}>
@@ -199,7 +206,7 @@ export const DashboardPage = () => {
           <span style={styles.badge}>{shop?.status || 'Setup needed'}</span>
           <div style={styles.metaRow}>
             <span style={{ ...styles.metaIcon, backgroundColor: '#fef3c7' }}>T</span>
-            <p style={styles.metaText}>{shop?.category || 'Shop category'}</p>
+            <p style={styles.metaText}>{shop?.category_name || 'Shop category'}</p>
           </div>
           <div style={styles.metaRow}>
             <span style={{ ...styles.metaIcon, backgroundColor: '#d1fae5' }}>C</span>
