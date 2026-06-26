@@ -35,6 +35,18 @@ class ProductTest < ActiveSupport::TestCase
     assert_raises(ActiveRecord::RecordInvalid) { @product.decrement_stock!(5) }
   end
 
+  test "increment_stock should add to existing quantity" do
+    @product.update!(quantity: 5)
+    @product.increment_stock!(2)
+    assert_equal 7, @product.reload.quantity
+  end
+
+  test "increment_stock should reject non-positive quantity" do
+    @product.update!(quantity: 5)
+    assert_raises(ActiveRecord::RecordInvalid) { @product.increment_stock!(0) }
+    assert_raises(ActiveRecord::RecordInvalid) { @product.increment_stock!(-1) }
+  end
+
   test "status should be active, inactive, or archived" do
     assert @product.valid?
     @product.status = "invalid"

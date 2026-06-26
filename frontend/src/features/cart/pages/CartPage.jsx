@@ -4,7 +4,7 @@ import updateCartItem from '../api/updateCartItem';
 import removeCartItem from '../api/removeCartItem';
 import checkoutCart from '../api/checkoutCart';
 
-const CartPage = ({ userId, onBack, visible, onCartChanged, onViewOrders }) => {
+const CartPage = ({ userId, onBack, onCartChanged, onViewOrders }) => {
   const [cartData, setCartData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -14,15 +14,15 @@ const CartPage = ({ userId, onBack, visible, onCartChanged, onViewOrders }) => {
   const [submitting, setSubmitting] = useState(false);
   const [isUpdating, setIsUpdating] = useState(false);
 
-  const userIdRef = useRef(userId);
+  const onCartChangedRef = useRef(onCartChanged);
   useEffect(() => {
-    userIdRef.current = userId;
-  }, [userId]);
+    onCartChangedRef.current = onCartChanged;
+  }, [onCartChanged]);
 
   const applyCartData = useCallback((data) => {
     setCartData(data);
-    onCartChanged?.(data?.item_count || 0);
-  }, [onCartChanged]);
+    onCartChangedRef.current?.(data?.item_count || 0);
+  }, []);
 
   const getSummary = (items = []) => ({
     subtotal: items.reduce((sum, item) => {
@@ -36,7 +36,7 @@ const CartPage = ({ userId, onBack, visible, onCartChanged, onViewOrders }) => {
       if (!prev) return prev;
       const nextItems = updater(prev.cart?.cart_items || []);
       const summary = getSummary(nextItems);
-      onCartChanged?.(summary.item_count);
+      onCartChangedRef.current?.(summary.item_count);
       return {
         ...prev,
         cart: {
@@ -50,34 +50,23 @@ const CartPage = ({ userId, onBack, visible, onCartChanged, onViewOrders }) => {
   };
 
   const fetchCart = useCallback(async () => {
-    if (!userId) return;
-    const capturedUserId = userId;
+    if (!userId) {
+      setLoading(false);
+      return;
+    }
+
     setLoading(true);
     setError('');
     try {
-      const data = await getCart(capturedUserId);
-      if (userIdRef.current === capturedUserId) {
-        applyCartData(data);
-      }
+      const data = await getCart();
+      applyCartData(data);
     } catch (err) {
-      console.log('error fetching cart', err);
-      if (userIdRef.current === capturedUserId) {
-        setError('Could not load your cart right now.');
-      }
+      console.error('error fetching cart', err);
+      setError('Could not load your cart right now.');
     } finally {
-      if (userIdRef.current === capturedUserId) {
-        setLoading(false);
-      }
+      setLoading(false);
     }
   }, [applyCartData, userId]);
-
-  const visibleRef = useRef(visible);
-  useEffect(() => {
-    if (!visibleRef.current && visible) {
-      fetchCart();
-    }
-    visibleRef.current = visible;
-  }, [fetchCart, visible]);
 
   useEffect(() => {
     fetchCart();

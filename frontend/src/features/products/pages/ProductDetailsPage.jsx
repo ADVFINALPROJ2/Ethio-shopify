@@ -4,6 +4,7 @@ import { OrderDetailsPage } from '../../orders/pages/OrderDetailsPage';
 import { getProduct } from '../api/getProduct';
 import { getProductOrders } from '../api/getProductOrders';
 import { updateProduct } from '../api/updateProduct';
+import { restockProduct } from '../api/restockProduct';
 import { deleteProductImage } from '../api/deleteProductImage';
 
 export const ProductDetailsPage = ({ productId, onBack }) => {
@@ -24,7 +25,7 @@ export const ProductDetailsPage = ({ productId, onBack }) => {
     if (!restockQty || restockQty <= 0) return;
     setIsRestocking(true);
     try {
-      const updated = await updateProduct(productId, { quantity: restockQty });
+      const updated = await restockProduct(productId, restockQty);
       setProduct(updated);
       setRestockQty(0);
     } catch (err) {
@@ -140,7 +141,6 @@ export const ProductDetailsPage = ({ productId, onBack }) => {
               <div style={styles.imageLabelTag}>No image</div>
             </>
           )}
-          <button style={styles.editImageBtn}>✏️ Edit</button>
         </div>
 
         <div style={styles.snapshotInfo}>
@@ -409,18 +409,6 @@ const styles = {
     color: '#66767e',
     textAlign: 'center',
     marginTop: '4px',
-  },
-  editImageBtn: {
-    position: 'absolute',
-    bottom: '6px',
-    backgroundColor: '#ffffff',
-    border: '1px solid #e2e8f0',
-    borderRadius: '12px',
-    fontSize: '10px',
-    fontWeight: '600',
-    padding: '2px 8px',
-    cursor: 'pointer',
-    boxShadow: '0 2px 4px rgba(0,0,0,0.05)',
   },
   snapshotInfo: {
     flex: 1,

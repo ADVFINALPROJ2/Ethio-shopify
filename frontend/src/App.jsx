@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 import ProductsPage from './features/products/pages/ProductsPage';
 import { DashboardPage } from './features/dashboard/pages/DashboardPage';
 import { ShopSetupPage } from './features/shop-creation/pages/ShopSetupPage';
@@ -29,9 +29,9 @@ function App() {
   const [buyerView, setBuyerView] = useState('products');
   const [cartVersion, setCartVersion] = useState(0);
 
-  const handleCartChanged = () => {
+  const handleCartChanged = useCallback(() => {
     setCartVersion((version) => version + 1);
-  };
+  }, []);
 
   const handleShopCreated = async (formData) => {
     setIsSubmittingShop(true);
@@ -93,10 +93,6 @@ function App() {
     );
   }
 
-  if (user?.has_shop) {
-    return <DashboardPage />;
-  }
-
   if (storefrontSlug) {
     if (buyerView === 'cart') {
       return (
@@ -104,7 +100,6 @@ function App() {
           userId={user?.id}
           onBack={() => setBuyerView('products')}
           onViewOrders={() => setBuyerView('orders')}
-          visible
           onCartChanged={handleCartChanged}
         />
       );
@@ -124,6 +119,10 @@ function App() {
         onCartChanged={handleCartChanged}
       />
     );
+  }
+
+  if (user?.has_shop) {
+    return <DashboardPage />;
   }
 
   if (isCreatingShop) {

@@ -30,6 +30,14 @@ class Product < ApplicationRecord
     update!(quantity: new_quantity)
   end
 
+  def increment_stock!(quantity = 1)
+    if quantity <= 0
+      errors.add(:quantity, "Restock quantity must be greater than 0")
+      raise ActiveRecord::RecordInvalid, self
+    end
+    update!(quantity: self.quantity + quantity)
+  end
+
   private
 
     def check_low_stock

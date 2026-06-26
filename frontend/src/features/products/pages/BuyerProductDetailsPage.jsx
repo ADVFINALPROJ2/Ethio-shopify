@@ -104,14 +104,7 @@ export const BuyerProductDetailsPage = ({ slug, productId, userId, onBack, onCar
             <h1 style={styles.name}>{product.name}</h1>
             <p style={styles.price}>{formatCurrency(product.price)}</p>
             <p style={styles.description}>{product.description || 'No description provided.'}</p>
-            <div style={styles.metaRow}>
-              <span>Status</span>
-              <strong>{product.status}</strong>
-            </div>
-            <div style={styles.metaRow}>
-              <span>Available</span>
-              <strong>{Number(product.quantity || 0).toLocaleString()}</strong>
-            </div>
+            
           </section>
 
           <footer style={styles.footer}>
@@ -251,14 +244,6 @@ const styles = {
     color: '#4b5563',
     fontSize: '14px',
     lineHeight: '1.55',
-  },
-  metaRow: {
-    display: 'flex',
-    justifyContent: 'space-between',
-    padding: '10px 0',
-    borderTop: '1px solid #f1f5f9',
-    color: '#64748b',
-    fontSize: '13px',
   },
   footer: {
     position: 'fixed',

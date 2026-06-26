@@ -67,6 +67,19 @@ class ProductsControllerTest < ActionDispatch::IntegrationTest
     assert_equal original_qty - 1, @product.quantity
   end
 
+  test "should restock product and increment stock" do
+    @product.update!(quantity: 5)
+    post restock_product_url(@product), params: { quantity: 2 }, headers: @headers, as: :json
+    assert_response :success
+    @product.reload
+    assert_equal 7, @product.quantity
+  end
+
+  test "should reject restock with non-positive quantity" do
+    post restock_product_url(@product), params: { quantity: 0 }, headers: @headers, as: :json
+    assert_response :unprocessable_entity
+  end
+
   test "should reject purchase when insufficient stock" do
     @product.update!(quantity: 0)
     post purchase_product_url(@product), params: { quantity: 1 }, headers: @headers, as: :json

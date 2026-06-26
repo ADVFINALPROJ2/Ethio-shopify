@@ -1,6 +1,6 @@
 class ProductsController < ApplicationController
   before_action :authenticate_user!
-  before_action :set_product, only: [ :show, :update, :destroy, :orders ]
+  before_action :set_product, only: [ :show, :update, :destroy, :orders, :restock ]
   before_action :set_public_product, only: [ :purchase ]
   before_action :set_storefront_product, only: [ :storefront_show ]
 
@@ -70,6 +70,20 @@ class ProductsController < ApplicationController
                     .order(created_at: :desc)
 
     render json: items.map { |item| product_order_json(item) }, status: :ok
+  end
+
+  def restock
+    quantity = params[:quantity].present? ? params[:quantity].to_i : 0
+
+    if quantity <= 0
+      render json: { errors: [ "Restock quantity must be greater than 0" ] }, status: :unprocessable_entity
+      return
+    end
+
+    @product.increment_stock!(quantity)
+    render json: product_json(@product), status: :ok
+  rescue ActiveRecord::RecordInvalid
+    render json: { errors: @product.errors.full_messages }, status: :unprocessable_entity
   end
 
   def destroy_image
