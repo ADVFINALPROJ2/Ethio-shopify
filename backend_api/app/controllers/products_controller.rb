@@ -22,7 +22,7 @@ class ProductsController < ApplicationController
     @product.shop = current_user.shop if current_user.shop.present?
 
     if @product.save
-      attach_images if params[:product][:images].present?
+      attach_images if params.dig(:product, :images).present?
       render json: product_json(@product), status: :created
     else
       render json: { errors: @product.errors.full_messages }, status: :unprocessable_entity
@@ -31,7 +31,7 @@ class ProductsController < ApplicationController
 
   def update
     if @product.update(product_params)
-      attach_images if params[:product][:images].present?
+      attach_images if params.dig(:product, :images).present?
       render json: product_json(@product), status: :ok
     else
       render json: { errors: @product.errors.full_messages }, status: :unprocessable_entity

@@ -3,11 +3,10 @@ import { OrderHistoryRow } from '../components/OrderHistoryRow';
 import { OrderDetailsPage } from '../../orders/pages/OrderDetailsPage';
 import { getProduct } from '../api/getProduct';
 import { getProductOrders } from '../api/getProductOrders';
-import { updateProduct } from '../api/updateProduct';
 import { restockProduct } from '../api/restockProduct';
-import { deleteProductImage } from '../api/deleteProductImage';
+import { deleteProduct } from '../api/deleteProduct';
 
-export const ProductDetailsPage = ({ productId, onBack }) => {
+export const ProductDetailsPage = ({ productId, onBack, onEdit, onDelete }) => {
   const [view, setView] = useState('details');
   const [searchQuery, setSearchQuery] = useState('');
   const [product, setProduct] = useState(null);
@@ -17,9 +16,9 @@ export const ProductDetailsPage = ({ productId, onBack }) => {
   const [errorMessage, setErrorMessage] = useState('');
   const [restockQty, setRestockQty] = useState(0);
   const [isRestocking, setIsRestocking] = useState(false);
-  const [isUploading, setIsUploading] = useState(false);
-  const [deletingImgId, setDeletingImgId] = useState(null);
-  const fileInputRef = useRef(null);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const menuRef = useRef(null);
 
   const handleRestock = async () => {
     if (!restockQty || restockQty <= 0) return;
@@ -35,39 +34,30 @@ export const ProductDetailsPage = ({ productId, onBack }) => {
     }
   };
 
-  const handleDeleteImage = async (imageId) => {
-    if (deletingImgId) return;
-    setDeletingImgId(imageId);
+  const handleDelete = async () => {
+    if (!window.confirm('Delete this product? This action cannot be undone.')) return;
+    setIsDeleting(true);
     try {
-      await deleteProductImage(productId, imageId);
-      setProduct(prev => prev ? {
-        ...prev,
-        image_urls: prev.image_urls.filter((_, i) => prev.images?.[i]?.id !== imageId),
-        images: prev.images?.filter(img => img.id !== imageId)
-      } : prev);
-    } catch (_err) {
-      alert('Failed to remove image');
+      await deleteProduct(productId);
+      if (onDelete) onDelete();
+      else if (onBack) onBack();
+    } catch (err) {
+      alert(err.response?.data?.errors?.[0] || 'Failed to delete product');
     } finally {
-      setDeletingImgId(null);
+      setIsDeleting(false);
+      setIsMenuOpen(false);
     }
   };
 
-  const handleUploadImages = async (e) => {
-    const files = e.target.files;
-    if (!files?.length) return;
-    setIsUploading(true);
-    try {
-      const formData = new FormData();
-      Array.from(files).forEach(file => formData.append('product[images][]', file));
-      const updated = await updateProduct(productId, formData);
-      setProduct(updated);
-    } catch (_err) {
-      alert('Failed to upload images');
-    } finally {
-      setIsUploading(false);
-      if (fileInputRef.current) fileInputRef.current.value = '';
-    }
-  };
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (menuRef.current && !menuRef.current.contains(event.target)) {
+        setIsMenuOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
   const formatCurrency = (value) => `ETB ${Number(value || 0).toLocaleString()}`;
   const formatDate = (value) => value ? new Date(value).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' }) : '';
@@ -146,11 +136,40 @@ export const ProductDetailsPage = ({ productId, onBack }) => {
         <div style={styles.snapshotInfo}>
           <div style={styles.titleRow}>
             <h1 style={styles.productTitle}>{product?.name || 'Product'}</h1>
-            <button style={styles.dotsButton}>
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#66767e" strokeWidth="2.5">
-                <circle cx="12" cy="5" r="1" /><circle cx="12" cy="12" r="1" /><circle cx="12" cy="17" r="1" />
-              </svg>
-            </button>
+            <div style={styles.menuWrapper} ref={menuRef}>
+              <button
+                type="button"
+                style={styles.dotsButton}
+                onClick={() => setIsMenuOpen((open) => !open)}
+                aria-label="Product actions"
+              >
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#66767e" strokeWidth="2.5">
+                  <circle cx="12" cy="5" r="1" /><circle cx="12" cy="12" r="1" /><circle cx="12" cy="17" r="1" />
+                </svg>
+              </button>
+              {isMenuOpen && (
+                <div style={styles.menuDropdown}>
+                  <button
+                    type="button"
+                    style={styles.menuItem}
+                    onClick={() => {
+                      setIsMenuOpen(false);
+                      if (onEdit) onEdit(product);
+                    }}
+                  >
+                    Edit Product
+                  </button>
+                  <button
+                    type="button"
+                    style={{ ...styles.menuItem, color: '#dc3545' }}
+                    onClick={handleDelete}
+                    disabled={isDeleting}
+                  >
+                    {isDeleting ? 'Deleting...' : 'Delete Product'}
+                  </button>
+                </div>
+              )}
+            </div>
           </div>
           <span style={styles.activeBadge}>{product?.status || 'active'}</span>
           <span style={styles.categorySubtext}>🏷️ {product?.product_category_name || product?.category_name || 'Uncategorized'}</span>
@@ -202,50 +221,6 @@ export const ProductDetailsPage = ({ productId, onBack }) => {
           >
             {isRestocking ? 'Updating...' : 'Restock'}
           </button>
-        </div>
-      </section>
-
-      {/* GALLERY MANAGEMENT SECTION */}
-      <section style={styles.sectionBlock}>
-        <h3 style={styles.sectionTitle}>Product Images</h3>
-        <div style={styles.galleryRow}>
-          {(product?.images || []).map((img) => (
-            <div key={img.id} style={styles.thumbWrapper}>
-              <img src={img.url} alt={`${product?.name}`} style={styles.thumbImage} />
-              <button
-                onClick={() => handleDeleteImage(img.id)}
-                disabled={deletingImgId === img.id}
-                style={styles.removeImgBtn}
-                title="Remove image"
-              >
-                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="3">
-                  <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
-                </svg>
-              </button>
-            </div>
-          ))}
-          <button
-            style={styles.addImageSquare}
-            onClick={() => fileInputRef.current?.click()}
-            disabled={isUploading}
-          >
-            {isUploading ? (
-              <span style={{ fontSize: '14px', color: '#66767e' }}>Uploading...</span>
-            ) : (
-              <>
-                <span style={{ fontSize: '18px', color: '#66767e' }}>＋</span>
-                <span style={styles.addImageText}>Add Image</span>
-              </>
-            )}
-          </button>
-          <input
-            ref={fileInputRef}
-            type="file"
-            accept="image/*"
-            multiple
-            onChange={handleUploadImages}
-            style={{ display: 'none' }}
-          />
         </div>
       </section>
 
@@ -421,7 +396,33 @@ const styles = {
     alignItems: 'flex-start',
   },
   productTitle: { margin: 0, fontSize: '16px', fontWeight: '800', color: '#0e1e25' },
+  menuWrapper: { position: 'relative' },
   dotsButton: { background: 'none', border: 'none', cursor: 'pointer', padding: '2px' },
+  menuDropdown: {
+    position: 'absolute',
+    top: '100%',
+    right: 0,
+    marginTop: '4px',
+    backgroundColor: '#fff',
+    border: '1px solid #e2e8f0',
+    borderRadius: '8px',
+    boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
+    minWidth: '140px',
+    zIndex: 20,
+    overflow: 'hidden',
+  },
+  menuItem: {
+    display: 'block',
+    width: '100%',
+    padding: '10px 14px',
+    border: 'none',
+    background: 'none',
+    textAlign: 'left',
+    fontSize: '13px',
+    fontWeight: '600',
+    color: '#0e1e25',
+    cursor: 'pointer',
+  },
   activeBadge: {
     fontSize: '10px',
     fontWeight: '700',
@@ -472,40 +473,6 @@ const styles = {
   stockUnit: { fontSize: '12px', fontWeight: '500' },
   sectionBlock: { marginBottom: '20px' },
   sectionTitle: { margin: '0 0 12px 0', fontSize: '14px', fontWeight: '700', color: '#0e1e25' },
-  galleryRow: { display: 'flex', gap: '8px', overflowX: 'auto', paddingBottom: '4px' },
-  thumbPlaceholder: {
-    width: '64px',
-    height: '64px',
-    backgroundColor: '#ffffff',
-    border: '1px dashed #ccd4d8',
-    borderRadius: '8px',
-    display: 'flex',
-    flexDirection: 'column',
-    alignItems: 'center',
-    justifyContent: 'center',
-    flexShrink: 0,
-    overflow: 'hidden',
-  },
-  thumbImage: {
-    width: '100%',
-    height: '100%',
-    objectFit: 'cover',
-  },
-  thumbLabel: { fontSize: '7px', color: '#a0aec0', marginTop: '2px' },
-  addImageSquare: {
-    width: '64px',
-    height: '64px',
-    backgroundColor: '#ffffff',
-    border: '1px dashed #ccd4d8',
-    borderRadius: '8px',
-    display: 'flex',
-    flexDirection: 'column',
-    alignItems: 'center',
-    justifyContent: 'center',
-    cursor: 'pointer',
-    flexShrink: 0,
-  },
-  addImageText: { fontSize: '9px', fontWeight: '600', color: '#66767e', marginTop: '2px' },
   filterBar: { display: 'flex', gap: '8px', marginBottom: '10px' },
   searchWrapper: {
     position: 'relative',
@@ -610,29 +577,5 @@ const styles = {
     fontWeight: '600',
     cursor: 'pointer',
     whiteSpace: 'nowrap',
-  },
-  thumbWrapper: {
-    position: 'relative',
-    width: '64px',
-    height: '64px',
-    borderRadius: '8px',
-    overflow: 'hidden',
-    border: '1px solid #e2e8f0',
-    flexShrink: 0,
-  },
-  removeImgBtn: {
-    position: 'absolute',
-    top: '-6px',
-    right: '-6px',
-    width: '20px',
-    height: '20px',
-    borderRadius: '50%',
-    backgroundColor: '#dc3545',
-    border: '2px solid #fff',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    cursor: 'pointer',
-    padding: 0,
   },
 };

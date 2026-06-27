@@ -2,7 +2,9 @@ import React, { useEffect, useState } from 'react';
 import { StatCard } from '../components/StatCard';
 import { ProductRow } from '../components/ProductRow';
 import { AddProductPage } from '../../products/pages/AddProductPage';
+import { EditProductPage } from '../../products/pages/EditProductPage';
 import { ProductDetailsPage } from '../../products/pages/ProductDetailsPage';
+import { SellerProductsPage } from '../../products/pages/SellerProductsPage';
 import { OrdersPage } from '../../orders/pages/OrdersPage';
 import { OrderDetailsPage } from '../../orders/pages/OrderDetailsPage';
 import { ShopProfilePage } from '../../profile/pages/ShopProfilePage';
@@ -20,6 +22,7 @@ export const DashboardPage = () => {
   const [activeTab, setActiveTab] = useState('dashboard');
   const [selectedProduct, setSelectedProduct] = useState(null);
   const [selectedOrderId, setSelectedOrderId] = useState(null);
+  const [returnView, setReturnView] = useState('dashboard');
   const [stats, setStats] = useState(null);
   const [shop, setShop] = useState(null);
   const [products, setProducts] = useState([]);
@@ -55,6 +58,33 @@ export const DashboardPage = () => {
   const formatCurrency = (value) => `ETB ${Number(value || 0).toLocaleString()}`;
   const getInitials = (name = '') => name.split(' ').map((part) => part[0]).join('').slice(0, 2).toUpperCase() || 'SH';
 
+  if (view === 'edit-product') {
+    return (
+      <EditProductPage
+        productId={selectedProduct?.id}
+        onCancel={() => setView('product-details')}
+        onSaveSuccess={() => {
+          setView('product-details');
+          loadDashboard();
+        }}
+      />
+    );
+  }
+
+  if (view === 'all-products') {
+    return (
+      <SellerProductsPage
+        onBack={() => setView('dashboard')}
+        onAddProduct={() => setView('add-product')}
+        onSelectProduct={(product) => {
+          setSelectedProduct(product);
+          setReturnView('all-products');
+          setView('product-details');
+        }}
+      />
+    );
+  }
+
   if (view === 'add-product') {
     return (
       <AddProductPage
@@ -72,7 +102,13 @@ export const DashboardPage = () => {
       <div style={{ minHeight: '100vh' }}>
         <ProductDetailsPage
           productId={selectedProduct?.id}
-          onBack={() => setView('dashboard')}
+          onBack={() => setView(returnView)}
+          onEdit={() => setView('edit-product')}
+          onDelete={() => {
+            setSelectedProduct(null);
+            setView(returnView);
+            loadDashboard();
+          }}
         />
         <nav style={styles.bottomNav}>
           <button onClick={() => { setView('dashboard'); setActiveTab('dashboard'); }} style={{ ...styles.navItem, color: '#00a84e' }}>
@@ -187,9 +223,6 @@ export const DashboardPage = () => {
           <h1 style={styles.greeting}>Good morning, Seller! 👋</h1>
           <p style={styles.subGreeting}>Here's what's happening with your shop today.</p>
         </div>
-        <button style={styles.viewShopBtn}>
-          View Shop 🔗
-        </button>
       </section>
 
       {/* SHOP CARD BANNER */}
@@ -276,7 +309,13 @@ export const DashboardPage = () => {
       <section style={styles.productsSection}>
         <div style={styles.sectionHeadingRow}>
           <h3 style={styles.sectionTitle}>Your Products</h3>
-          <button style={styles.viewAllProductsBtn}>View all products ›</button>
+          <button
+            style={styles.viewAllProductsBtn}
+            onClick={() => setView('all-products')}
+            type="button"
+          >
+            View all products ›
+          </button>
         </div>
         <div style={styles.productsListCard}>
           {products.length > 0 ? products.map(product => (
@@ -287,6 +326,7 @@ export const DashboardPage = () => {
               stockCount={product.quantity || 0}
               onClick={() => {
                 setSelectedProduct(product);
+                setReturnView('dashboard');
                 setView('product-details');
               }}
             />
@@ -372,23 +412,10 @@ const styles = {
   roleText: { fontSize: '12px', color: '#4a555a' },
   dropdownArrow: { fontSize: '9px', color: '#888' },
   welcomeSection: {
-    display: 'flex',
-    justifyContent: 'space-between',
-    alignItems: 'flex-start',
     marginBottom: '20px',
   },
   greeting: { fontSize: '20px', fontWeight: '800', color: '#0e1e25', margin: '0 0 4px 0' },
   subGreeting: { fontSize: '12px', color: '#66767e', margin: 0 },
-  viewShopBtn: {
-    backgroundColor: '#ffffff',
-    border: '1px solid #00a84e',
-    color: '#00a84e',
-    padding: '8px 12px',
-    borderRadius: '6px',
-    fontSize: '12px',
-    fontWeight: '600',
-    cursor: 'pointer',
-  },
   shopCard: {
     backgroundColor: '#ffffff',
     border: '1px solid #f0f4f8',
