@@ -257,21 +257,21 @@ export const DashboardPage = () => {
             <span style={styles.storeLinkBadge}>Primary Link</span>
           </div>
           <p style={styles.storeLinkDesc}>Share this link with your customers so they can order directly from Telegram.</p>
-          
+
           <div style={styles.linkBox}>
             <span style={styles.linkText}>{shop.telegram_url}</span>
-            <button 
+            <button
               onClick={() => {
                 navigator.clipboard.writeText(shop.telegram_url);
                 if (window.Telegram?.WebApp) window.Telegram.WebApp.HapticFeedback.notificationOccurred('success');
-              }} 
+              }}
               style={styles.copyBtn}
             >
               Copy
             </button>
           </div>
-          
-          <button 
+
+          <button
             onClick={() => {
               const text = `Check out my shop ${shop.name} on Telegram!`;
               if (window.Telegram?.WebApp?.openTelegramLink) {
@@ -319,7 +319,7 @@ export const DashboardPage = () => {
         </div>
         <div style={styles.productsListCard}>
           {products.length > 0 ? products.map(product => (
-            <ProductRow 
+            <ProductRow
               key={product.id}
               name={product.name}
               price={formatCurrency(product.price)}
@@ -597,7 +597,8 @@ const styles = {
     gap: '6px'
   },
   statsRow: {
-    display: 'flex',
+    display: 'grid',
+    gridTemplateColumns: 'repeat(2, 1fr)',
     gap: '8px',
     marginBottom: '24px',
     overflowX: 'auto',
